@@ -1,0 +1,35 @@
+{
+  "name": "GURA-MDvBETA",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Ryou",
+  "license": "ISC",
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "api-qasim": "^3.2.10",
+    "axios": "^1.11.0",
+    "express": "^4.21.1",
+    "ffmpeg-static": "^5.1.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "form-data": "^4.0.0",
+    "gtts": "^0.2.1",
+    "he": "^1.2.0",
+    "image2url": "^1.0.15",
+    "pino": "^9.9.0",
+    "qrcode-terminal": "^0.12.0",
+    "ruhend-scraper": "^8.3.0",
+    "sharp": "^0.32.6",
+    "spotifydl-x": "^0.3.5",
+    "wa-sticker-formatter": "^4.4.4",
+    "yt-search": "^2.10.4",
+    "ytdl-core": "^4.11.5"
+  }
+}
