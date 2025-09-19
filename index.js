@@ -17,14 +17,14 @@ const { scheduleCardSpawns } = require("./spawnManager"); // your spawn logic
 const mongoose = require("mongoose"); // fixed typo (was "moongoose")
 
 const MONGO_URI = process.env.MONGODB_URI || 
-  "mongodb+srv://Ryou:12345@shoob-cards.6bphku9.mongodb.net/shoob?retryWrites=true&w=majority&appName=Shoob-Cards";
+  "mongodb+srv://Ryou:12345@shoob-cards.6bphku9.mongodb.net/?retryWrites=true&w=majority&appName=Shoob-Cards";
 
 async function connectDB() {
   try {
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      dbName: "shoob", // ensures correct DB is targeted
+      dbName: "cards-backup", // ensures correct DB is targeted
     });
     console.log("✅ Connected to MongoDB: shoob");
   } catch (err) {
