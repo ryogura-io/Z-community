@@ -107,9 +107,9 @@ async function spawnCard(sock, msgQueue, groupId) {
         
         // Create spawn message
         const spawnMessage = `🎴 *CARD SPAWNED!* 🎴\n\n` +
-            `📜 *Name:*${card.name}\n` +
-            `⭐ *Tier:*${card.tier}\n` +
-            `🎭 *Series:*${card.series}\n` +
+            `📜 *Name:* ${card.name}\n` +
+            `⭐ *Tier:* ${card.tier}\n` +
+            `🎭 *Series:* ${card.series}\n` +
             `👨‍🎨 *Maker:* ${card.maker}\n` +
             `💰 *Value:* ${cardPrice} shards\n\n` +
             `🔤 *Use:* !claim ${captcha}\n` +
