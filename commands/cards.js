@@ -44,12 +44,8 @@ const cardCommands = {
                 spawnManager.removeActiveSpawn(chatId);
                 
                 const claimMsg = `🎉 *Card Claimed!*\n\n` +
-                    `👤 *${player.name}*\n` +
-                    `🎴 *${activeSpawn.card.name}*\n` +
-                    `⭐ *${activeSpawn.card.tier}*\n` +
-                    `🎭 *${activeSpawn.card.series}*\n` +
-                    `🎯 *Added to:* ${emptySlot !== -1 ? `Deck slot ${emptySlot + 1}` : 'Collection'}\n` +
-                    `💫 *+50 EXP*`;
+                    `*${player.name}* has Successfully claimed *${activeSpawn.card.name}*[${activeSpawn.card.tier}] \n` +
+                    `🎯 *Added to:* ${emptySlot !== -1 ? `Deck slot ${emptySlot + 1}` : 'Collection'}\n`
                 
                 await bot.sendMessage(chatId, claimMsg);
             } catch (error) {
