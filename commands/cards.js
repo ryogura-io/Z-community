@@ -78,13 +78,10 @@ const cardCommands = {
                     
                     const card = player.collection[cardIndex];
                     const cardMsg = `🎴 *Card #${args[0]}*\n\n` +
-                    `📜 *Name:*${card.name}\n` +
-                    `⭐ *Tier:*${card.tier}\n` +
-                    `🎭 *Series:*${card.series}\n` +
+                    `📜 *Name:* ${card.name}\n` +
+                    `⭐ *Tier:* ${card.tier}\n` +
+                    `🎭 *Series:* ${card.series}\n` +
                     `👨‍🎨 *Maker:* ${card.maker}`;
-                    // let img = card.img
-                    // const res = await fetch(img);
-                    // const buffer = Buffer.from(await res.arrayBuffer());
                     
                     await bot.sendImage(chatId, await (await axios.get(card.img, { responseType: "arraybuffer" })).data, cardMsg);
                 } else {
@@ -134,12 +131,12 @@ const cardCommands = {
                     }
                     
                     const cardMsg = `🎴 *Deck Position ${args[0]}*\n\n` +
-                        `📜 *Name:*${card.name}\n` +
-                        `⭐ *Tier:*${card.tier}\n` +
-                        `🎭 *Series:*${card.series}\n` +
+                        `📜 *Name:* ${card.name}\n` +
+                        `⭐ *Tier:* ${card.tier}\n` +
+                        `🎭 *Series:* ${card.series}\n` +
                         `👨‍🎨 *Maker:* ${card.maker}`;
                     
-                    await bot.sendMessage(chatId, cardMsg);
+                    await bot.sendImage(chatId, await (await axios.get(card.img, { responseType: "arraybuffer" })).data, cardMsg);
                 } else {
                     let deckMsg = `🃏 *${player.name}'s Primary Deck*\n\n`;
                     
