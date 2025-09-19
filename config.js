@@ -4,7 +4,7 @@ const phoneNumber = '2348153827918' + '@s.whatsapp.net';
 
 // Default configuration
 const defaultConfig = {
-    prefix: '-',
+    prefix: '!',
     ownerName: 'Zen',
     phoneNumber,
     pairingNumber,
