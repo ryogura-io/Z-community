@@ -6,7 +6,7 @@ const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const categoryMap = {
     basic: {
         title: "🏓 Basic",
-        commands: ['help', 'ping', 'main',]
+        commands: ['help', 'ping', 'main', 'locked']
     },
     utility: {
         title: "🛠️ Utility",
