@@ -42,8 +42,7 @@ const familiaCommands = {
         description: "Add a member to your familia",
         usage: "add <@user>",
         aliases: ['addmember'],
-        execute: async ({ sender, chatId, args, bot }) => {
-            if (!args[0]) return bot.sendMessage(chatId, "❌ Usage: !add <@user>");
+        execute: async ({ sender, chatId, message, args, bot }) => {
 
             try {
                 const player = await Player.findOne({ userId: sender });
@@ -53,7 +52,16 @@ const familiaCommands = {
                 if (!familia) return bot.sendMessage(chatId, "❌ Familia not found!");
                 if (familia.head !== sender) return bot.sendMessage(chatId, "❌ Only the familia head can add members!");
 
-                const mentionedUser = args[0].replace(/[@\s]/g, '') + "@s.whatsapp.net";
+                let mentionedUser;
+
+                if (message.message?.extendedTextMessage?.contextInfo?.participant) {
+                    mentionedUser = message.message.extendedTextMessage.contextInfo.participant;
+                } else if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+                    mentionedUser = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
+                } else {
+                    return bot.sendMessage(chatId, "❌ mention a user to add them!");
+                }
+
                 const newMember = await Player.findOne({ userId: mentionedUser });
                 if (!newMember) return bot.sendMessage(chatId, "❌ That user is not registered!");
                 if (newMember.familiaId) return bot.sendMessage(chatId, "❌ That user is already in a familia!");
@@ -77,8 +85,7 @@ const familiaCommands = {
         description: "Remove a member from your familia",
         usage: "remove <@user>",
         aliases: ['rm', 'rmmember'],
-        execute: async ({ sender, chatId, args, bot }) => {
-            if (!args[0]) return bot.sendMessage(chatId, "❌ Usage: !remove <@user>");
+        execute: async ({ sender, chatId, message, args, bot }) => {
 
             try {
                 const player = await Player.findOne({ userId: sender });
@@ -88,7 +95,15 @@ const familiaCommands = {
                 if (!familia) return bot.sendMessage(chatId, "❌ Familia not found!");
                 if (familia.head !== sender) return bot.sendMessage(chatId, "❌ Only the familia head can remove members!");
 
-                const mentionedUser = args[0].replace(/[@\s]/g, '') + "@s.whatsapp.net";
+                let mentionedUser;
+
+                if (message.message?.extendedTextMessage?.contextInfo?.participant) {
+                    mentionedUser = message.message.extendedTextMessage.contextInfo.participant;
+                } else if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+                    mentionedUser = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
+                } else {
+                    return bot.sendMessage(chatId, "❌ mention a user to remove them!");
+                }
 
                 if (!familia.members.includes(mentionedUser)) {
                     return bot.sendMessage(chatId, "❌ That user is not in your familia!");
@@ -118,11 +133,15 @@ const familiaCommands = {
                 if (familias.length === 0) return bot.sendMessage(chatId, "❌ No familias exist yet!");
 
                 let message = "🏰 *Existing Familias:*\n\n";
-                familias.forEach(f => {
-                    message += `👑 *${f.name}*\nHead: @${f.head.split('@')[0]}\nMembers: ${f.members.length}\n\n`;
-                });
+                for (const f of familias) {
+                    // Fetch only the head player
+                    const headPlayer = await Player.findOne({ userId: f.head });
+                    const headName = headPlayer ? headPlayer.name : f.head;
 
-                await bot.sendMessage(chatId, message, {mentions: familias.head});
+                    message += `👑 *${f.name}*\nHead: ${headName}\nMembers: ${f.members.length}\n\n`;
+                }
+
+                await bot.sendMessage(chatId, message);
             } catch (error) {
                 console.error("Familialist error:", error);
                 await bot.sendMessage(chatId, "❌ Error fetching familia list.");
@@ -143,13 +162,18 @@ const familiaCommands = {
                 const familia = await Familia.findById(player.familiaId);
                 if (!familia) return bot.sendMessage(chatId, "❌ Familia not found!");
 
-                let message = `🏰 *${familia.name}*\n👑 Head: ${familia.head}\n\n`;
+                let message = `🏰 *${familia.name}*\n👑 Head: @${familia.head.split('@')[0]}\n\n`;
                 message += `👥 Members (${familia.members.length}):\n`;
-                familia.members.forEach(m => {
-                    message += `- ${m}\n`;
+                // Load all member documents at once
+                const members = await Player.find({ userId: { $in: familia.members } });
+
+                familia.members.forEach(memberId => {
+                    const player = members.find(m => m.userId === memberId);
+                    const displayName = player ? player.name : memberId.split('@')[0]; // fallback
+                    message += `- ${displayName}\n`;
                 });
 
-                await bot.sendMessage(chatId, message);
+                await bot.sendMessage(chatId, message, {mentions: [ familia.head ] });
             } catch (error) {
                 console.error("Familia info error:", error);
                 await bot.sendMessage(chatId, "❌ Error fetching familia info.");
