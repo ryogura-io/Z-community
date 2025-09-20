@@ -159,6 +159,7 @@ const moderatorCommands = {
     removecard: {
         description: "Remove a card from user's deck",
         usage: "removecard (reply to user) <deck_number>",
+        aliases: ['rc'],
         adminOnly: true,
         execute: async ({ sender, chatId, message, args, bot }) => {
             if (!args[0] || isNaN(args[0])) {
@@ -311,6 +312,7 @@ const moderatorCommands = {
     cardinfo: {
         description: "View all players currently owning a particular card",
         usage: "cardinfo <cardname> - <tier>",
+        aliases: ['ci'],
         adminOnly: true,
         execute: async ({ chatId, args, bot }) => {
             if (args.length < 3 || !args.includes('-')) {
