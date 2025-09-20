@@ -62,11 +62,11 @@ function generateCaptcha() {
 const tierConfig = {
     1: { weight: 45, price: 100 },
     2: { weight: 25, price: 250 },
-    3: { weight: 15, price: 500 },
-    4: { weight: 8, price: 1000 },
-    5: { weight: 4, price: 2000 },
-    6: { weight: 2, price: 5000 },
-    S: { weight: 1, price: 10000 },
+    3: { weight: 17, price: 500 },
+    4: { weight: 10, price: 1000 },
+    5: { weight: 2, price: 2000 },
+    6: { weight: 0.7, price: 5000 },
+    S: { weight: 0.3, price: 10000 },
 };
 
 // Get weighted random card based on tier spawn rates
@@ -313,7 +313,7 @@ function cleanupExpiredSpawns() {
 }
 
 // Flexible spawn times array (minutes in each hour)
-const spawnTimes = [0, 15, 20, 30, 45]; // default: every hour at :00 and :30
+const spawnTimes = [0, 20, 40]; // default: every hour at :00 and :30
 
 function scheduleCardSpawns(sock, msgQueue) {
     setInterval(cleanupExpiredSpawns, 10 * 60 * 1000);
