@@ -6,7 +6,7 @@ const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const categoryMap = {
     basic: {
         title: "🏓 Basic",
-        commands: ['help', 'ping', 'locked',]
+        commands: ['help', 'ping', 'main',]
     },
     utility: {
         title: "🛠️ Utility",
@@ -121,7 +121,6 @@ const helpCommand = {
                     helpText += `💡 Use ${prefix}help <command> for detailed help\n`;
                     helpText += `> ZEN by ryou.`;
 
-                    // const fileBuffer = fs.readFileSync("assets/violeto.mp4");
                     const fileBuffer = fs.readFileSync("assets/violeto.mp4");
                     await bot.sendVideo(chatId, fileBuffer, helpText, true);
                 } catch (error) {
@@ -182,6 +181,18 @@ const helpCommand = {
             
             const fileBuffer = fs.readFileSync("assets/coffee-morning.mp4");
             await bot.sendVideo(chatId, fileBuffer, adminMenu, true);
+        }
+    },
+
+    main: {
+        description: 'Send invite link to main group chat',
+        usage: 'main',
+        aliases: ['maingc'],
+        adminOnly: false,
+        execute: async (context) => {
+            const { chatId, bot } = context;
+            const mainMsg = `Uhm`
+            await bot.sendMessage(chatId, mainMsg);
         }
     },
 
