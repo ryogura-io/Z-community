@@ -46,6 +46,7 @@ const categoryMap = {
             "afk",
             "exp",
             "rank",
+            "setbio",
             "inventory",
             "leaderboard",
             "mods",
