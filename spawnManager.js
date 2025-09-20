@@ -211,7 +211,7 @@ function cleanupExpiredSpawns() {
 }
 
 // Flexible spawn times array (minutes in each hour)
-const spawnTimes = [0, 30, 45, 50]; // default: every hour at :00 and :30
+const spawnTimes = [0,15,20,30,45]; // default: every hour at :00 and :30
 
 function scheduleCardSpawns(sock, msgQueue) {
     setInterval(cleanupExpiredSpawns, 10 * 60 * 1000);
