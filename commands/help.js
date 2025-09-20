@@ -272,11 +272,10 @@ const helpCommand = {
         adminOnly: true,
         execute: async (context) => {
             const { chatId, bot } = context;
-            const adminMenu = `*🔅Admin Commands Menu* \n📊 *Sudo* \n• addsudo \n• delsudo \n• settings \n• set
-            \n👑 *Owner* \n• mode \n• setpp`;
-
-            const fileBuffer = fs.readFileSync("assets/coffee-morning.mp4");
-            await bot.sendVideo(chatId, fileBuffer, adminMenu, true);
+            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout
+            \n\n👑 *Owner* \n• mode, setpp, addsudo, delsudo, set`
+            await bot.sendMessage(chatId, adminMenu);
+            
         },
     },
 
