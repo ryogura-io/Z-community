@@ -277,6 +277,7 @@ const economyCommands = {
                 if (!groupSlotsEnabled) {
                     return bot.sendMessage(chatId, "🎰 Slots are currently disabled in this group!");
                 }
+                const player = await Player.findOne({ userId: sender });
                 
                 // Check if user's familia has slots enabled
                 if (player.familiaId) {
@@ -289,7 +290,6 @@ const economyCommands = {
                 }
                 
                 const betAmount = parseInt(args[0]);
-                const player = await Player.findOne({ userId: sender });
                 
                 if (!player) {
                     return bot.sendMessage(chatId, "❌ Please register first using !register <name>");
