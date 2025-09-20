@@ -36,18 +36,40 @@ class Bot {
             const args = messageText.slice(prefix.length).trim().split(' ');
             const commandName = args.shift().toLowerCase();
 
-            if (!this.commands[commandName]) return;
-
+            
             const sender = message.key.participant || message.key.remoteJid;
             const chatId = message.key.remoteJid;
             const isGroup = chatId.endsWith('@g.us');
-
+            
             // Bot only works in groups
             if (!isGroup) {
-                await this.sendMessage(chatId, "🏠 This bot only works in group chats!");
                 return;
             }
-
+            
+            // ✅ Check if group is enabled in DB (allow moderators anyway)
+            const Group = require("./models/Group")
+            const Player = require("./models/Player")
+            const group = await Group.findOne({ groupId: chatId });
+            const player = await Player.findOne({ userId: sender });
+            
+            if ((!group || group.status !== "enabled") && !(player && player.isModerator)) {
+                return 
+            }
+            
+            
+            // --- 🔥 BANNED CHECK ---
+            const User = require("./models/Player"); // adjust path if needed
+            const userDoc = await User.findOne({ userId: sender });
+            if (userDoc?.isBanned) {
+                console.log(`[BLOCKED] Banned user ${sender} tried to use ${commandName}`);
+                return; // ❌ Stop here, don’t execute anything
+            }
+            
+            if (!this.commands[commandName]) {
+                await this.sendMessage(chatId, `❌ Unknown command: *${commandName}*\n💡 Try ${config.get("prefix")}help for a list of commands.`);
+                return;
+            }
+            
             if (!config.checkCooldown(sender, commandName)) return;
 
             const command = this.commands[commandName];
