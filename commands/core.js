@@ -231,10 +231,31 @@ const coreCommands = {
     profile: {
         description: "Show your profile details",
         usage: "profile",
+        aliases: ['p'],
         adminOnly: false,
         execute: async ({ sender, chatId, bot, sock }) => {
             try {
-                const player = await Player.findOne({ userId: sender }).populate('collection familiaId');
+                let target;
+
+                if (
+                    message.message?.extendedTextMessage?.contextInfo
+                        ?.participant
+                ) {
+                    target =
+                        message.message.extendedTextMessage.contextInfo
+                            .participant;
+                } else if (
+                    message.message?.extendedTextMessage?.contextInfo
+                        ?.mentionedJid?.length
+                ) {
+                    target =
+                        message.message.extendedTextMessage.contextInfo
+                            .mentionedJid[0];
+                } else {
+                    target = message.key.participant || message.key.remoteJid;
+                }
+                
+                const player = await Player.findOne({ userId: target }).populate('collection familiaId');
                 if (!player) {
                     return bot.sendMessage(chatId, "❌ Please register first!");
                 }
@@ -242,7 +263,7 @@ const coreCommands = {
                 // Get profile picture
                 let pfpUrl;
                 try {
-                    pfpUrl = await sock.profilePictureUrl(sender, "image");
+                    pfpUrl = await sock.profilePictureUrl(target, "image");
                 } catch {
                     pfpUrl = "https://i.ibb.co/1m1dFHS/default-pfp.png";
                 }
