@@ -184,7 +184,7 @@ const economyCommands = {
                 await sender_player.save();
                 await target_player.save();
                 
-                await bot.sendMessage(chatId, `*${sender_player.name}* sent 💸 *${amount}* shards to *${target_player}* successfully!`);
+                await bot.sendMessage(chatId, `*${sender_player.name}* sent 💸 *${amount}* shards to *${target_player.name}* successfully!`);
             } catch (error) {
                 console.error('Give error:', error);
                 await bot.sendMessage(chatId, "❌ Error transferring shards.");
