@@ -97,7 +97,7 @@ async function spawnCard(sock, msgQueue, groupId) {
 
         const cardPrice = tierConfig[card.tier]?.price || 100;
 
-        const spawnMessage = `🎴 *CARD SPAWNED!* 🎴\n\n` +
+        const spawnMessage = `┌──「 *CARD SPAWN* 」\n\n` +
             `📜 *Name:* ${card.name}\n` +
             `⭐ *Tier:* ${card.tier}\n` +
             `🎭 *Series:* ${card.series}\n` +
@@ -159,7 +159,7 @@ async function forceSpawnCard(sock, msgQueue, groupId, arg = null) {
 
         const cardPrice = tierConfig[card.tier]?.price || 100;
 
-        const spawnMessage = `🎴 *CARD FORCED SPAWN!* 🎴\n\n` +
+        const spawnMessage = `┌──「 *CARD SUMMONS*  」\n\n` +
             `📜 *Name:* ${card.name}\n` +
             `⭐ *Tier:* ${card.tier}\n` +
             `🎭 *Series:* ${card.series}\n` +
