@@ -115,7 +115,7 @@ const coreCommands = {
                 const currentExp = player.exp % 1000;
                 
                 const msg = `🏆 *RANK INFO*\n\n` +
-                    `👤 *${player.name}*\n` +
+                    `👤 *Name:* ${player.name}\n` +
                     `📊 *Level:* ${player.level}\n` +
                     `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
                     `📈 *Progress:* ${currentExp}/${expForNext}\n` +
@@ -171,11 +171,13 @@ const coreCommands = {
             try {
                 const type = args[0] || 'exp';
                 let sortField = 'exp';
-                let title = '⭐ EXP LEADERBOARD';
+                let title = '⭐ *EXP LEADERBOARD*';
+                let unit = 'XP'
                 
                 if (type === 'shards') {
                     sortField = 'shards';
-                    title = '💰 SHARDS LEADERBOARD';
+                    title = '💰 *SHARDS LEADERBOARD*';
+                    unit = 'shards';
                 } else if (type === 'cards') {
                     // For cards, we'll count collection length
                     const players = await Player.find({}).populate('collection');
@@ -196,7 +198,7 @@ const coreCommands = {
                 players.forEach((player, index) => {
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
                     const value = type === 'shards' ? player.shards.toLocaleString() : player.exp.toLocaleString();
-                    leaderboard += `${medal} *${player.name}* - ${value}\n`;
+                    leaderboard += `${medal} *${player.name}* - ${value} ${unit}\n`;
                 });
                 
                 await bot.sendMessage(chatId, leaderboard);
@@ -232,7 +234,7 @@ const coreCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, bot, sock }) => {
             try {
-                const player = await Player.findOne({ userId: sender }).populate('collection');
+                const player = await Player.findOne({ userId: sender }).populate('collection familiaId');
                 if (!player) {
                     return bot.sendMessage(chatId, "❌ Please register first!");
                 }
@@ -263,7 +265,7 @@ const coreCommands = {
                     `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
                     `🎴 *Cards:* ${totalCards}\n` +
                     `🃏 *Deck:* ${deckCards}/12\n` +
-                    `🏰 *Familia:* ${familiaName}\n` +
+                    `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : 'None'}\n` +
                     `📝 *Bio:* ${player.bio || 'No bio set'}\n` +
                     `🎭 *Character:* ${player.character || 'Not set'}`;
 
