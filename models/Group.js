@@ -11,14 +11,5 @@ const groupSchema = new mongoose.Schema({
   spawn: { type: String, enum: ["enabled", "disabled"], default: "enabled" }
 });
 
-groupSchema.methods.updateName = async function (sock) {
-  try {
-    const metadata = await sock.groupMetadata(this.groupId);
-    this.groupName = metadata.subject;
-    await this.save();
-  } catch (err) {
-    console.error("Failed to update group name:", err);
-  }
-};
-
 module.exports = mongoose.model("Group", groupSchema);
+
