@@ -13,47 +13,58 @@ const cardCommands = {
             if (!args[0]) {
                 return bot.sendMessage(chatId, "❌ Usage: !claim <captcha>");
             }
-            
+
             try {
                 const activeSpawn = spawnManager.getActiveSpawn(chatId);
                 if (!activeSpawn) {
                     return bot.sendMessage(chatId, "❌ No active card spawn in this group!");
                 }
-                
+
                 if (args[0].toUpperCase() !== activeSpawn.captcha.toUpperCase()) {
                     return bot.sendMessage(chatId, "❌ Incorrect captcha!");
                 }
-                
+
                 let player = await Player.findOne({ userId: sender });
                 if (!player) {
                     return bot.sendMessage(chatId, "❌ Please register first using !register <name>");
                 }
-                
+
+                // ✅ Check shards
+                const cardPrice = spawnManager.tierConfig[activeSpawn.card.tier]?.price || 100;
+                if (player.shards < cardPrice) {
+                    return bot.sendMessage(chatId, `❌ You need *${cardPrice} shards* to claim this card!\n💰 Your shards: ${player.shards}`);
+                }
+
+                // Deduct shards
+                player.shards -= cardPrice;
+
                 // Find empty deck slot or add to collection
                 const emptySlot = player.deck.findIndex(slot => slot === null);
-                
                 if (emptySlot !== -1) {
                     player.deck[emptySlot] = activeSpawn.card._id;
                 } else {
                     player.collection.push(activeSpawn.card._id);
                 }
-                
+
                 player.exp += 50;
                 await player.save();
-                
+
                 spawnManager.removeActiveSpawn(chatId);
-                
-                const claimMsg = `🎉 *Card Claimed!*\n\n` +
-                    `*${player.name}* has Successfully claimed *${activeSpawn.card.name}*[${activeSpawn.card.tier}] \n` +
-                    `🎯 *Added to:* ${emptySlot !== -1 ? `Deck slot ${emptySlot + 1}` : 'Collection'}\n`
-                
+
+                // ✅ Now define claimMsg BEFORE sending
+                const claimMsg = `🎉 *Card Claimed! by ${player.name}*\n\n` +
+                    `🎴 Card: *${activeSpawn.card.name}* [Tier ${activeSpawn.card.tier}] \n` +
+                    `🎯 Added to: ${emptySlot !== -1 ? `Deck slot ${emptySlot + 1}` : 'Collection'}\n`
+
                 await bot.sendMessage(chatId, claimMsg);
+
             } catch (error) {
                 console.error('Claim error:', error);
                 await bot.sendMessage(chatId, "❌ Error claiming card.");
             }
         }
     },
+
 
     collection: {
         description: "Display user cards collection in numerical order",
@@ -72,27 +83,27 @@ const cardCommands = {
                     if (cardIndex < 0 || cardIndex >= player.collection.length) {
                         return bot.sendMessage(chatId, "❌ Invalid card number!");
                     }
-                    
-                    
+
+
                     const card = player.collection[cardIndex];
-                    const cardMsg = `🎴 *Card #${args[0]}*\n\n` +
-                    `📜 *Name:* ${card.name}\n` +
-                    `⭐ *Tier:* ${card.tier}\n` +
-                    `🎭 *Series:* ${card.series}\n` +
-                    `👨‍🎨 *Maker:* ${card.maker}`;
-                    
+                    const cardMsg = `┌──「 *CARD DETAILS* 」\n\n` +
+                        `📜 *Name:* ${card.name}\n` +
+                        `⭐ *Tier:* ${card.tier}\n` +
+                        `🎭 *Series:* ${card.series}\n` +
+                        `👨‍🎨 *Maker:* ${card.maker}`;
+
                     await bot.sendImage(chatId, await (await axios.get(card.img, { responseType: "arraybuffer" })).data, cardMsg);
                 } else {
                     const totalCards = player.collection.length;
                     if (totalCards === 0) {
                         return bot.sendMessage(chatId, "📦 Your collection is empty!");
                     }
-                    
+
                     let collectionMsg = `🎴 *${player.name}'s Collection (${totalCards} cards)*\n\n`;
                     player.collection.forEach((card, index) => {
                         collectionMsg += `*${index + 1}. ${card.name}* [${card.tier}]\n    Series: ${card.series}\n`;
                     });
-                    
+
                     await bot.sendMessage(chatId, collectionMsg);
                 }
             } catch (error) {
@@ -126,7 +137,7 @@ const cardCommands = {
                         return bot.sendMessage(chatId, `❌ No card at deck position ${args[0]}!`);
                     }
 
-                    const cardMsg = `🎴 *Deck Position ${args[0]}*\n\n` +
+                    const cardMsg = `┌──「 *CARD DETAILS* 」\n\n` +
                         `📜 *Name:* ${card.name}\n` +
                         `⭐ *Tier:* ${card.tier}\n` +
                         `🎭 *Series:* ${card.series}\n` +
@@ -145,10 +156,10 @@ const cardCommands = {
                     return bot.sendMessage(chatId, "❌ Your deck is empty!");
                 }
 
-                let deckMsg = `🃏 *${player.name}'s Primary Deck*\n\n`;
+                let deckMsg = `🃏 *${player.name}'s Deck*\n\n`;
 
                 for (const { card, pos } of filledSlots) {
-                    deckMsg += `🎴 *${pos}.* ${card.name}  —  ${card.tier}\n`;
+                    deckMsg += `🎴 *${pos}.* *${card.name}*\n⭐ Tier: ${card.tier}\n\n`;
                 }
 
                 await bot.sendMessage(chatId, deckMsg);
@@ -167,8 +178,8 @@ const cardCommands = {
         execute: async ({ sender, chatId, args, bot }) => {
             try {
                 const player = await Player.findOne({ userId: sender })
-                .populate('collection')
-                .populate('deck');
+                    .populate('collection')
+                    .populate('deck');
 
                 if (!player) {
                     return bot.sendMessage(chatId, "❌ Please register first!");
@@ -321,13 +332,13 @@ const cardCommands = {
             if (!args[0]) {
                 return bot.sendMessage(chatId, "❌ Usage: !collector <series_name>");
             }
-            
+
             try {
                 const seriesName = args.join(' ');
                 const players = await Player.find({}).populate('collection');
-                
+
                 const collectors = players.map(player => {
-                    const seriesCards = player.collection.filter(card => 
+                    const seriesCards = player.collection.filter(card =>
                         card.series.toLowerCase().includes(seriesName.toLowerCase())
                     );
                     return {
@@ -335,19 +346,19 @@ const cardCommands = {
                         count: seriesCards.length
                     };
                 }).filter(collector => collector.count > 0)
-                  .sort((a, b) => b.count - a.count)
-                  .slice(0, 3);
-                
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 3);
+
                 if (collectors.length === 0) {
                     return bot.sendMessage(chatId, `📦 No collectors found for series: ${seriesName}`);
                 }
-                
+
                 let collectorMsg = `🏆 *Top ${seriesName} Collectors*\n\n`;
                 collectors.forEach((collector, index) => {
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
                     collectorMsg += `${medal} *${collector.name}* - ${collector.count} cards\n`;
                 });
-                
+
                 await bot.sendMessage(chatId, collectorMsg);
             } catch (error) {
                 console.error('Collector error:', error);
@@ -399,7 +410,7 @@ const cardCommands = {
 
                 let seriesMsg = `🎭 *${player.name}'s ${seriesName} Cards (${seriesCards.length})*\n\n`;
                 sortedCards.forEach((card, index) => {
-                    seriesMsg += `${index + 1}. ${card.name} (Tier ${card.tier})`;
+                    seriesMsg += `${index + 1}. ${card.name} (Tier ${card.tier})\n`;
                 });
 
                 await bot.sendMessage(chatId, seriesMsg);
@@ -470,7 +481,7 @@ const cardCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, message, args, bot }) => {
             let targetUser;
-            
+
             if (message.message?.extendedTextMessage?.contextInfo?.participant) {
                 targetUser = message.message.extendedTextMessage.contextInfo.participant;
             } else if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
