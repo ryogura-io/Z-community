@@ -191,7 +191,7 @@ const helpCommand = {
         adminOnly: false,
         execute: async (context) => {
             const { chatId, bot } = context;
-            const mainMsg = `Uhm`
+            const mainMsg = `Main Group Chat Link\n> https://chat.whatsapp.com/III5VhO64Is7dc8CmN0eW3`
             await bot.sendMessage(chatId, mainMsg);
         }
     },
