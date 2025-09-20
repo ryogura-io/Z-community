@@ -47,7 +47,7 @@ const economyCommands = {
                     return bot.sendMessage(chatId, "❌ You have already claimed your welcome bonus!");
                 }
                 
-                const bonusAmount = 15000;
+                const bonusAmount = 30000;
                 player.shards += bonusAmount;
                 player.bonusClaimed = true;
                 await player.save();
