@@ -180,11 +180,11 @@ const moderatorCommands = {
 
     startslot: {
         description: "Open slot for familia members",
-        usage: "startslot <familia_id>",
+        usage: "startslot <familia_name>",
         adminOnly: true,
         execute: async ({ chatId, args, bot }) => {
             if (!args[0]) {
-                return bot.sendMessage(chatId, "❌ Usage: !startslot <familia_id>");
+                return bot.sendMessage(chatId, "❌ Usage: !startslot <familia_name>");
             }
 
             // TODO: Implement familia slot system
@@ -194,11 +194,11 @@ const moderatorCommands = {
 
     endslot: {
         description: "Close slot for familia",
-        usage: "endslot <familia_id>",
+        usage: "endslot <familia_name>",
         adminOnly: true,
         execute: async ({ chatId, args, bot }) => {
             if (!args[0]) {
-                return bot.sendMessage(chatId, "❌ Usage: !endslot <familia_id>");
+                return bot.sendMessage(chatId, "❌ Usage: !endslot <familia_name>");
             }
 
             // TODO: Implement familia slot system
@@ -206,10 +206,10 @@ const moderatorCommands = {
         }
     },
 
-    forcespawn: {
+    summon: {
         description: "Force spawn a card immediately in current group",
-        usage: "forcespawn [url|name]",
-        aliases: ["fspawn"],
+        usage: "summon [url|name]",
+        aliases: ["summon"],
         adminOnly: true,
         execute: async ({ chatId, args, bot, sock, msgQueue }) => {
             try {
@@ -223,7 +223,7 @@ const moderatorCommands = {
                 const success = await spawnManager.forceSpawnCard(sock, msgQueue, chatId, arg);
 
                 if (success) {
-                    await bot.sendMessage(chatId, "⚡ Card force spawned successfully!");
+                    await bot.sendMessage(chatId, "⚡ Card summoned successfully!");
                 } else {
                     await bot.sendMessage(chatId, "❌ Failed to spawn card (card not found or requirements not met).");
                 }
