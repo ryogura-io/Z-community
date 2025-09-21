@@ -233,7 +233,7 @@ const coreCommands = {
         usage: "profile",
         aliases: ['p'],
         adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock }) => {
+        execute: async ({ sender, chatId, bot, sock, message }) => {
             try {
                 let target;
 
