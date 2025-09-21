@@ -257,7 +257,7 @@ class Bot {
 
             // If no specific reaction, use random emoji from array
             if (!reactionEmoji) {
-                const randomEmojis = ['✅', '🎯', '⚡', '🚀', '💫', '🎪', '🎭', '🎨', '🎵', '🔥', '💎', '⭐', '🌟'];
+                const randomEmojis = ['✅', '⚡', '🚀', '💫', '🔥', '💎', '⭐', '🌟','✨', '☀', '❤️', '💖', '🩵', '💧','🫧'];
                 reactionEmoji = randomEmojis[Math.floor(Math.random() * randomEmojis.length)];
             }
 
