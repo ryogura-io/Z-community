@@ -216,7 +216,7 @@ const helpCommand = {
                     helpText += `> ZEN by ryou.`;
 
                     const fileBuffer = fs.readFileSync("assets/violeto.mp4");
-                    await bot.sendVideo(chatId, fileBuffer, helpText, true);
+                    await bot.sendVideo(chatId, fileBuffer, helpText, true, {gif:true});
                 } catch (error) {
                     const fallbackHelp =
                         `💎 *ZEN*\n\n` +
