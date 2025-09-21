@@ -1,6 +1,6 @@
 // queue.js
 class MessageQueue {
-    constructor(sock, delay = 800) { // default 0.8s between sends
+    constructor(sock, delay = 500) { // default 0.8s between sends
         this.sock = sock;
         this.delay = delay;
         this.queue = [];
