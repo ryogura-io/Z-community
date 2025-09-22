@@ -62,6 +62,7 @@ const categoryMap = {
             "give",
             "rob",
             "shop",
+            "buy",
             "slot",
             "shards",
             "vault",
@@ -260,7 +261,7 @@ const helpCommand = {
         adminOnly: true,
         execute: async (context) => {
             const { chatId, sock, message } = context;
-            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout
+            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout, stop, show
             \n\n👑 *Owner* \n• mode, setpp, addsudo, delsudo, set`
             await sock.sendMessage(chatId, { text: adminMenu }, {quoted: message});
             
