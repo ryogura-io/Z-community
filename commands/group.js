@@ -84,7 +84,7 @@ const groupCommands = {
                 const result = await sock.groupParticipantsUpdate(chatId, [targetUser], 'remove');
                 
                 if (result[0].status === 'success') {
-                    await sock.sendMessage(chatId, `✅ Successfully removed @${targetUser.split('@')[0]} from the group.`);
+                    await sock.sendMessage(chatId,{ text: `✅ Successfully removed @${targetUser.split('@')[0]} from the group.`}, { quoted: message });
                 } else {
                     await sock.sendMessage(chatId, { text: `❌ Failed to remove @${targetUser.split('@')[0]}.` }, { quoted: message });
                 }
@@ -127,12 +127,12 @@ const groupCommands = {
 
             try {
                 await sock.groupParticipantsUpdate(chatId, [targetUser], 'promote');
-                await sock.sendMessage(chatId, `✅ Successfully promoted @${targetUser.split('@')[0]} to admin.`, {
+                await sock.sendMessage(chatId, { text:`✅ Successfully promoted @${targetUser.split('@')[0]} to admin.`} , {
                     mentions: [targetUser]
                 });
             } catch (error) {
                 console.error('Promote error:', error);
-                await sock.sendMessage(chatId, `❌ Failed to promote @${targetUser.split('@')[0]}.`, {
+                await sock.sendMessage(chatId, { text: `❌ Failed to promote @${targetUser.split('@')[0]}.`}, {
                     mentions: [targetUser]
                 });
             }
@@ -172,12 +172,12 @@ const groupCommands = {
 
             try {
                 await sock.groupParticipantsUpdate(chatId, [targetUser], 'demote');
-                await sock.sendMessage(chatId, `✅ Successfully demoted @${targetUser.split('@')[0]} from admin.`, {
+                await sock.sendMessage(chatId, { text: `✅ Successfully demoted @${targetUser.split('@')[0]} from admin.`}, {
                     mentions: [targetUser]
                 });
             } catch (error) {
                 console.error('Demote error:', error);
-                await sock.sendMessage(chatId, `❌ Failed to demote @${targetUser.split('@')[0]}.`, {
+                await sock.sendMessage(chatId, { text: `❌ Failed to demote @${targetUser.split('@')[0]}.`} , {
                     mentions: [targetUser]
                 });
             }
@@ -190,7 +190,7 @@ const groupCommands = {
         aliases: ["ginfo"],
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, isGroup, bot, sock } = context;
+            const { chatId, isGroup, bot, sock, message } = context;
 
             if (!isGroup) {
                 await sock.sendMessage(chatId, { text: '❌ This command can only be used in groups.' }, { quoted: message });
