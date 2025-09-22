@@ -40,8 +40,13 @@ const adminCommands = {
                 return;
             }
 
-            // 🔹 Normalize JID  
-            const fullNumber = phoneNumber + '@s.whatsapp.net';
+            // 🔹 Normalize JID
+            let fullNumber;
+            if (isGroup) {
+                fullNumber = phoneNumber + '@lid';
+            } else {
+                fullNumber = phoneNumber + '@s.whatsapp.net';
+            }
 
             if (config.addAdmin(fullNumber)) {
                 await sock.sendMessage(chatId, { text: `✅ Added ${phoneNumber} as bot admin.` }, { quoted: message });
@@ -91,8 +96,13 @@ const adminCommands = {
                 return;
             }
 
-            // 🔹 Normalize JID  
-            const fullNumber = phoneNumber + '@s.whatsapp.net';
+            // 🔹 Normalize JID
+            let fullNumber;
+            if (isGroup) {
+                fullNumber = phoneNumber + '@lid';
+            } else {
+                fullNumber = phoneNumber + '@s.whatsapp.net';
+            }
 
             if (config.removeAdmin(fullNumber)) {
                 await sock.sendMessage(chatId, { text: `✅ Removed ${phoneNumber} from bot admins.` }, { quoted: message });
