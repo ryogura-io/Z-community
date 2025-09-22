@@ -100,7 +100,7 @@ const moderatorCommands = {
         description: "Disable the bot in current group",
         usage: "disable",
         adminOnly: true,
-        execute: async ({ chatId, bot }) => {
+        execute: async ({ chatId, bot, sock, message }) => {
             try {
                 let group = await Group.findOne({ groupId: chatId });
 
@@ -112,10 +112,10 @@ const moderatorCommands = {
 
                 await group.save();
 
-                await sock.sendMessage(chatId, "🚫 Bot has been *disabled* in this group!");
+                await sock.sendMessage(chatId, { text: "🚫 Bot has been *disabled* in this group!"}, { quoted: message });
             } catch (err) {
                 console.error("Disable error:", err);
-                await sock.sendMessage(chatId, "❌ Error disabling bot in this group.");
+                await sock.sendMessage(chatId, { text: "❌ Error disabling bot in this group."}, { quoted: message });
             }
         }
     },
@@ -124,7 +124,7 @@ const moderatorCommands = {
         description: "Enable/disable card spawning in group",
         usage: "spawn <yes/no>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot, message }) => {
+        execute: async ({ chatId, args, bot, sock, message }) => {
             if (!args[0]) {
                 return sock.sendMessage(chatId, { text: "❌ Usage: !spawn <yes/no>" }, { quoted: message });
             }
@@ -145,13 +145,13 @@ const moderatorCommands = {
                 await group.save();
                 
                 if (enable) {
-                    await sock.sendMessage(chatId, "✅ Card spawning enabled in this group!");
+                    await sock.sendMessage(chatId, { text: "✅ Card spawning enabled in this group!"}, { quoted: message });
                 } else {
-                    await sock.sendMessage(chatId, "🚫 Card spawning disabled in this group!");
+                    await sock.sendMessage(chatId, { text: "🚫 Card spawning disabled in this group!"}, { quoted: message });
                 }
             } catch (error) {
                 console.error('Spawn command error:', error);
-                await sock.sendMessage(chatId, '❌ Error updating spawn settings.');
+                await sock.sendMessage(chatId, { text:'❌ Error updating spawn settings.'}, { quoted: message });
             }
         }
     },
@@ -163,7 +163,7 @@ const moderatorCommands = {
         adminOnly: true,
         execute: async ({ sender, chatId, message, args, bot }) => {
             if (!args[0] || isNaN(args[0])) {
-                return sock.sendMessage(chatId, "❌ Usage: !removecard (reply to user) <deck_number>");
+                return sock.sendMessage(chatId, { text: "❌ Usage: !removecard (reply to user) <deck_number>"}, { quoted: message });
             }
 
             let targetUser;
@@ -173,7 +173,7 @@ const moderatorCommands = {
             } else if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
                 targetUser = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
             } else {
-                return sock.sendMessage(chatId, "❌ Reply to a user!");
+                return sock.sendMessage(chatId, { text: "❌ Reply to a user!"}, { quoted: message });
             }
 
             try {
@@ -181,24 +181,24 @@ const moderatorCommands = {
                 const player = await Player.findOne({ userId: targetUser });
                 
                 if (!player) {
-                    return sock.sendMessage(chatId, "❌ User not registered!");
+                    return sock.sendMessage(chatId, { text: "❌ User not registered!"}, { quoted: message });
                 }
 
                 if (deckPosition < 0 || deckPosition >= 12) {
-                    return sock.sendMessage(chatId, "❌ Deck position must be 1-12!");
+                    return sock.sendMessage(chatId, { text: "❌ Deck position must be 1-12!"}, { quoted: message });
                 }
 
                 if (!player.deck[deckPosition]) {
-                    return sock.sendMessage(chatId, "❌ No card at that position!");
+                    return sock.sendMessage(chatId, { text: "❌ No card at that position!"}, { quoted: message });
                 }
 
                 player.deck[deckPosition] = null;
                 await player.save();
 
-                await sock.sendMessage(chatId, `✅ Card removed from user's deck position ${args[0]}!`);
+                await sock.sendMessage(chatId, { text: `✅ Card removed from user's deck position ${args[0]}!`}, { quoted: message });
             } catch (error) {
                 console.error('Remove card error:', error);
-                await sock.sendMessage(chatId, "❌ Error removing card.");
+                await sock.sendMessage(chatId, { text:"❌ Error removing card."}, { quoted: message });
             }
         }
     },
@@ -207,9 +207,9 @@ const moderatorCommands = {
         description: "Open slot for familia members",
         usage: "startslot <familia_name>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot }) => {
+        execute: async ({ chatId, args, bot, sock, message }) => {
             if (!args[0]) {
-                return sock.sendMessage(chatId, "❌ Usage: !startslot <familia_name>");
+                return sock.sendMessage(chatId, { text:"❌ Usage: !startslot <familia_name>"}, { quoted: message });
             }
 
             try {
@@ -220,7 +220,7 @@ const moderatorCommands = {
                 // Update familia slot status
                 const familia = await Familia.findOne({ name: { $regex: new RegExp('^' + familiaName + '$', 'i') } });
                 if (!familia) {
-                    return sock.sendMessage(chatId, `❌ Familia '${familiaName}' not found!`);
+                    return sock.sendMessage(chatId, { text:`❌ Familia '${familiaName}' not found!`}, { quoted: message });
                 }
                 
                 familia.slot = "enabled";
@@ -235,10 +235,10 @@ const moderatorCommands = {
                 }
                 await group.save();
                 
-                await sock.sendMessage(chatId, `🎰 Slots opened for familia *${familiaName}* in this group!`);
+                await sock.sendMessage(chatId, { text:`🎰 Slots opened for familia *${familiaName}* in this group!`}, { quoted: message });
             } catch (error) {
                 console.error('StartSlot error:', error);
-                await sock.sendMessage(chatId, '❌ Error enabling slots.');
+                await sock.sendMessage(chatId, { text:'❌ Error enabling slots.'}, { quoted: message });
             }
         }
     },
@@ -247,9 +247,9 @@ const moderatorCommands = {
         description: "Close slot for familia",
         usage: "endslot <familia_name>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot }) => {
+        execute: async ({ chatId, args, bot, sock, message }) => {
             if (!args[0]) {
-                return sock.sendMessage(chatId, "❌ Usage: !endslot <familia_name>");
+                return sock.sendMessage(chatId, { text: "❌ Usage: !endslot <familia_name>"}, { quoted: message });
             }
 
             try {
@@ -260,7 +260,7 @@ const moderatorCommands = {
                 // Update familia slot status
                 const familia = await Familia.findOne({ name: { $regex: new RegExp('^' + familiaName + '$', 'i') } });
                 if (!familia) {
-                    return sock.sendMessage(chatId, `❌ Familia '${familiaName}' not found!`);
+                    return sock.sendMessage(chatId, { text:`❌ Familia '${familiaName}' not found!`}, { quoted: message });
                 }
                 
                 familia.slot = "disabled";
@@ -273,10 +273,10 @@ const moderatorCommands = {
                     await group.save();
                 }
                 
-                await sock.sendMessage(chatId, `🎰 Slots closed for familia *${familiaName}* in this group!`);
+                await sock.sendMessage(chatId, { text: `🎰 Slots closed for familia *${familiaName}* in this group!`}, { quoted: message });
             } catch (error) {
                 console.error('EndSlot error:', error);
-                await sock.sendMessage(chatId, '❌ Error disabling slots.');
+                await sock.sendMessage(chatId, { text:'❌ Error disabling slots.'}, { quoted: message });
             }
         }
     },
@@ -286,10 +286,10 @@ const moderatorCommands = {
         usage: "summon [url|name]",
         aliases: ["summon"],
         adminOnly: true,
-        execute: async ({ chatId, args, bot, sock, msgQueue }) => {
+        execute: async ({ chatId, args, bot, sock, msgQueue, message }) => {
             try {
                 if (!chatId.endsWith("@g.us")) {
-                    return sock.sendMessage(chatId, "❌ This command only works in groups!");
+                    return sock.sendMessage(chatId, { text: "❌ This command only works in groups!"}, { quoted: message });
                 }
 
                 const spawnManager = require("../spawnManager.js");
@@ -298,13 +298,13 @@ const moderatorCommands = {
                 const success = await spawnManager.forceSpawnCard(sock, msgQueue, chatId, arg);
 
                 if (success) {
-                    await sock.sendMessage(chatId, "⚡ Card summoned successfully!");
+                    await sock.sendMessage(chatId, { text: "⚡ Card summoned successfully!"}, { quoted: message });
                 } else {
-                    await sock.sendMessage(chatId, "❌ Failed to spawn card (card not found or requirements not met).");
+                    await sock.sendMessage(chatId, { text:"❌ Failed to spawn card (card not found or requirements not met)."}, { quoted: message });
                 }
             } catch (error) {
                 console.error("Force spawn error:", error);
-                await sock.sendMessage(chatId, "❌ Error force spawning card.");
+                await sock.sendMessage(chatId, { text: "❌ Error force spawning card."}, { quoted: message });
             }
         }
     },
@@ -314,9 +314,9 @@ const moderatorCommands = {
         usage: "cardinfo <cardname> - <tier>",
         aliases: ['ci'],
         adminOnly: true,
-        execute: async ({ chatId, args, bot }) => {
+        execute: async ({ chatId, args, bot, sock, message }) => {
             if (args.length < 3 || !args.includes('-')) {
-                return sock.sendMessage(chatId, "❌ Usage: !cardinfo <cardname> - <tier>");
+                return sock.sendMessage(chatId, { text: "❌ Usage: !cardinfo <cardname> - <tier>"}, { quoted: message });
             }
             
             try {
@@ -324,7 +324,7 @@ const moderatorCommands = {
                 const [cardName, tier] = inputText.split(' - ').map(s => s.trim());
                 
                 if (!cardName || !tier) {
-                    return sock.sendMessage(chatId, "❌ Usage: !cardinfo <cardname> - <tier>");
+                    return sock.sendMessage(chatId, { text: "❌ Usage: !cardinfo <cardname> - <tier>"}, { quoted: message });
                 }
                 
                 const Card = require("../models/Card");
@@ -337,7 +337,7 @@ const moderatorCommands = {
                 });
                 
                 if (!card) {
-                    return sock.sendMessage(chatId, `❌ Card '${cardName} [${tier}]' not found in database!`);
+                    return sock.sendMessage(chatId, { text:`❌ Card '${cardName} [${tier}]' not found in database!`}, { quoted: message });
                 }
                 
                 // Find all players who own this card
@@ -350,7 +350,7 @@ const moderatorCommands = {
                 });
                 
                 if (playersWithCard.length === 0) {
-                    return sock.sendMessage(chatId, `📄 *Card Info: ${card.name} [${card.tier}]*\n\n❌ No players currently own this card.`);
+                    return sock.sendMessage(chatId, { text:`📄 *Card Info: ${card.name} [${card.tier}]*\n\n❌ No players currently own this card.`}, { quoted: message });
                 }
                 
                 let infoMsg = `📄 *Card Info: ${card.name} [${card.tier}]*\n\n👥 *Owners (${playersWithCard.length}):**\n\n`;
@@ -368,7 +368,7 @@ const moderatorCommands = {
                 await sock.sendMessage(chatId, infoMsg);
             } catch (error) {
                 console.error('CardInfo error:', error);
-                await sock.sendMessage(chatId, "❌ Error fetching card information.");
+                await sock.sendMessage(chatId, { text: "❌ Error fetching card information."}, { quoted: message });
             }
         }
     },
