@@ -16,7 +16,7 @@ const mediaCommands = {
         aliases: ["vv"],
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, bot, sock, message } = context;
+            const { chatId, sock, message } = context;
             
             // Check if replying to a message
             const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -82,7 +82,7 @@ const mediaCommands = {
         aliases: ["s"],
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, bot, message, sock } = context;
+            const { chatId, message, sock } = context;
 
             let targetMessage = null;
             let type = null;
@@ -147,7 +147,7 @@ const mediaCommands = {
         aliases: ["steal"],
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, bot, message, sock, args } = context;
+            const { chatId, message, sock, args } = context;
 
             const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
             if (!quotedMessage?.stickerMessage) {
@@ -199,7 +199,7 @@ const mediaCommands = {
         aliases: ["topicture", "tophoto"],
         adminOnly: false,
         execute: async (context) => {
-            const { bot, chatId, message } = context;
+            const { sock, bot, chatId, message } = context;
 
             try {
                 // get the quoted message
@@ -231,7 +231,7 @@ const mediaCommands = {
         usage: 'tomp3 (reply to a video)',
         adminOnly: false,
         execute: async (context) => {
-            const { bot, chatId, message } = context;
+            const { sock, bot, chatId, message } = context;
 
             try {
                 // get quoted message
