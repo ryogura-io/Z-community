@@ -102,7 +102,7 @@ const cardCommands = {
 
                 // ✅ Now define claimMsg BEFORE sending
                 const claimMsg =
-                    `🎉 *Card Claimed! by ${player.name}*\n\n` +
+                    `🎉 *Card claimed by ${player.name}!*\n\n` +
                     `🎴 Card: *${activeSpawn.card.name}* [Tier ${activeSpawn.card.tier}] \n` +
                     `🎯 Added to: ${emptySlot !== -1 ? `Deck slot ${emptySlot + 1}` : "Collection"}\n`;
 
