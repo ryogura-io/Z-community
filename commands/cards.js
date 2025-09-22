@@ -645,179 +645,63 @@ const cardCommands = {
         }
     },
 
-    deck: {
-        description: "Show your current deck as a 4x3 grid image",
-        usage: "deck",
-        aliases: ["d"],
+        deck: {
+        description: "Show your deck or specific card",
+        usage: "deck [deck_number]",
+        aliases: ['d'],
         adminOnly: false,
-        execute: async ({ sender, chatId, sock, message }) => {
+        execute: async ({ sender, chatId, args, bot }) => {
             try {
-                const Player = require("../models/Player");
                 const player = await Player.findOne({ userId: sender }).populate('deck');
-                
-                if (!player || !player.deck || player.deck.length === 0) {
-                    return sock.sendMessage(chatId, { text: "❌ You don't have any cards in your deck!" }, {quoted: message});
+                if (!player) {
+                    return bot.sendMessage(chatId, "❌ Please register first!");
                 }
 
-                // Create 4x3 grid with placeholder images for empty slots
-                const sharp = require('sharp');
-                const axios = require('axios');
-                
-                const gridWidth = 4;
-                const gridHeight = 3;
-                const totalSlots = 12;
-                const cardWidth = 200;
-                const cardHeight = 280;
-                
-                const gridImage = sharp({
-                    create: {
-                        width: cardWidth * gridWidth,
-                        height: cardHeight * gridHeight,
-                        channels: 3,
-                        background: { r: 30, g: 30, b: 30 }
+                // If user requested a specific slot
+                if (args[0] && !isNaN(args[0])) {
+                    const cardIndex = parseInt(args[0]) - 1;
+                    if (cardIndex < 0 || cardIndex >= 12) {
+                        return bot.sendMessage(chatId, "❌ Deck position must be 1-12!");
                     }
-                });
 
-                const images = [];
-                
-                for (let i = 0; i < totalSlots; i++) {
-                    const card = player.deck[i];
-                    const x = (i % gridWidth) * cardWidth;
-                    const y = Math.floor(i / gridWidth) * cardHeight;
-                    
-                    if (card && card.img) {
-                        try {
-                            // Check if image is webm or gif - skip these formats
-                            const imageUrl = card.img.toLowerCase();
-                            if (imageUrl.includes('.webm') || imageUrl.includes('.gif') || imageUrl.includes('.mov') || imageUrl.includes('.mp4')) {
-                                // Use text placeholder for unsupported formats
-                                const textPlaceholder = await sharp({
-                                    create: {
-                                        width: cardWidth,
-                                        height: cardHeight,
-                                        channels: 3,
-                                        background: { r: 50, g: 80, b: 120 }
-                                    }
-                                })
-                                .composite([{
-                                    input: Buffer.from(`
-                                    <svg width="${cardWidth}" height="${cardHeight}">
-                                        <rect width="100%" height="100%" fill="rgb(50,80,120)"/>
-                                        <text x="50%" y="40%" text-anchor="middle" fill="white" font-size="14" font-family="Arial">
-                                            ${(card.name || 'Card').substring(0, 15)}
-                                        </text>
-                                        <text x="50%" y="60%" text-anchor="middle" fill="white" font-size="12" font-family="Arial">
-                                            ${card.tier || 'N/A'}
-                                        </text>
-                                        <text x="50%" y="80%" text-anchor="middle" fill="white" font-size="10" font-family="Arial">
-                                            (Video/GIF)
-                                        </text>
-                                    </svg>`),
-                                    top: 0,
-                                    left: 0
-                                }])
-                                .jpeg()
-                                .toBuffer();
-                                
-                                images.push({
-                                    input: textPlaceholder,
-                                    top: y,
-                                    left: x
-                                });
-                            } else {
-                                // Process supported image formats (png, jpg, jpeg)
-                                const response = await axios.get(card.img, { 
-                                    responseType: 'arraybuffer',
-                                    timeout: 5000 
-                                });
-                                
-                                let cardImage;
-                                try {
-                                    cardImage = await sharp(response.data)
-                                        .resize(cardWidth, cardHeight, { fit: 'cover' })
-                                        .jpeg()
-                                        .toBuffer();
-                                } catch (sharpErr) {
-                                    console.error('Sharp processing error:', sharpErr);
-                                    throw sharpErr;
-                                }
-                                
-                                images.push({
-                                    input: cardImage,
-                                    top: y,
-                                    left: x
-                                });
-                            }
-                        } catch (err) {
-                            console.error('Error loading card image:', card.name, card.img, err.message);
-                            // Use placeholder for failed image loads
-                            const placeholder = await sharp({
-                                create: {
-                                    width: cardWidth,
-                                    height: cardHeight,
-                                    channels: 3,
-                                    background: { r: 80, g: 50, b: 50 }
-                                }
-                            })
-                            .composite([{
-                                input: Buffer.from(`
-                                <svg width="${cardWidth}" height="${cardHeight}">
-                                    <rect width="100%" height="100%" fill="rgb(80,50,50)"/>
-                                    <text x="50%" y="45%" text-anchor="middle" fill="white" font-size="16" font-family="Arial">
-                                        ${(card.name || 'Card').substring(0, 12)}
-                                    </text>
-                                    <text x="50%" y="65%" text-anchor="middle" fill="white" font-size="12" font-family="Arial">
-                                        (Load Error)
-                                    </text>
-                                </svg>`),
-                                top: 0,
-                                left: 0
-                            }])
-                            .jpeg()
-                            .toBuffer();
-                            
-                            images.push({
-                                input: placeholder,
-                                top: y,
-                                left: x
-                            });
-                        }
-                    } else {
-                        // Empty slot placeholder
-                        const placeholder = await sharp({
-                            create: {
-                                width: cardWidth,
-                                height: cardHeight,
-                                channels: 3,
-                                background: { r: 45, g: 45, b: 45 }
-                            }
-                        }).toBuffer();
-                        
-                        images.push({
-                            input: placeholder,
-                            top: y,
-                            left: x
-                        });
+                    const card = player.deck[cardIndex];
+                    if (!card) {
+                        return bot.sendMessage(chatId, `❌ No card at deck position ${args[0]}!`);
                     }
+
+                    const cardMsg = `🎴 *Deck Position ${args[0]}*\n\n` +
+                        `📜 *Name:* ${card.name}\n` +
+                        `⭐ *Tier:* ${card.tier}\n` +
+                        `🎭 *Series:* ${card.series}\n` +
+                        `👨‍🎨 *Maker:* ${card.maker}`;
+
+                    const imgBuffer = (await axios.get(card.img, { responseType: "arraybuffer" })).data;
+                    return bot.sendImage(chatId, imgBuffer, cardMsg);
                 }
 
-                const finalImage = await gridImage.composite(images).jpeg().toBuffer();
-                
-                const deckText = `🎴 **${player.name}'s Deck**\n\n` +
-                    `📊 Cards: ${player.deck.filter(card => card).length}/${totalSlots}\n` +
-                    `⭐ Level: ${player.level} | 💎 Shards: ${player.shards}`;
+                // Otherwise show the whole deck (only filled slots)
+                const filledSlots = player.deck
+                    .map((c, i) => ({ card: c, pos: i + 1 }))
+                    .filter(entry => entry.card !== null && entry.card !== undefined);
 
-                await sock.sendMessage(chatId, {
-                    image: finalImage,
-                    caption: deckText
-                }, {quoted: message});
+                if (filledSlots.length === 0) {
+                    return bot.sendMessage(chatId, "❌ Your deck is empty!");
+                }
+
+                let deckMsg = `🃏 *${player.name}'s Primary Deck*\n\n`;
+
+                for (const { card, pos } of filledSlots) {
+                    deckMsg += `🎴 *${pos}.* ${card.name}  —  ${card.tier}\n`;
+                }
+
+                await bot.sendMessage(chatId, deckMsg);
 
             } catch (error) {
-                console.error('Deck command error:', error);
-                await sock.sendMessage(chatId, { text: "❌ Error generating deck image." }, {quoted: message});
+                console.error('Deck error:', error);
+                await bot.sendMessage(chatId, "❌ Error fetching deck.");
             }
         }
-    }
+    },
 
 };
 
