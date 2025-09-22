@@ -423,7 +423,7 @@ const moderatorCommands = {
                 const Card = require("../models/Card");
                 const cards = await Card.find({ 
                     series: { $regex: new RegExp(seriesName, 'i') } 
-                }).sort({ tier: 1 }); // Sort by tier (ascending order for tiers like 1, 2, 3, S)
+                }).sort({ tier: -1 }); // Sort by tier (ascending order for tiers like 1, 2, 3, S)
 
                 if (cards.length === 0) {
                     return sock.sendMessage(chatId, { text: `❌ No cards found for series: ${seriesName}` }, {quoted: message});
@@ -448,7 +448,7 @@ const moderatorCommands = {
                 });
 
                 sortedTiers.forEach(tier => {
-                    response += `**Tier ${tier}:**\n`;
+                    response += `⭐ *Tier ${tier}:*\n`;
                     tierGroups[tier].forEach(card => {
                         response += `• ${card.name} (by ${card.maker})\n`;
                     });
