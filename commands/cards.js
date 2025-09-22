@@ -542,7 +542,7 @@ const cardCommands = {
                 if (foundCards.length === 0) {
                     return sock.sendMessage(
                         chatId,
-                        `🔍 No cards found matching: ${searchTerm}`,
+                        {text: `🔍 No cards found matching: ${searchTerm}`},{quoted: message}
                     );
                 }
 
@@ -555,7 +555,7 @@ const cardCommands = {
                     searchMsg += `\n... and ${foundCards.length - 10} more matches`;
                 }
 
-                await sock.sendMessage(chatId, searchMsg);
+                await sock.sendMessage(chatId, { text: searchMsg},{quoted: messsage} );
             } catch (error) {
                 console.error("Search card error:", error);
                 await sock.sendMessage(chatId, { text: "❌ Error searching cards." }, { quoted: message });
