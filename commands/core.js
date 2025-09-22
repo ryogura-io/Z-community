@@ -167,7 +167,7 @@ const coreCommands = {
         usage: "leaderboard [cards|shards]",
         aliases: ['lb'],
         adminOnly: false,
-        execute: async ({ chatId, args, bot }) => {
+        execute: async ({ chatId, args,sock, bot }) => {
             try {
                 const type = args[0] || 'exp';
                 let sortField = 'exp';
@@ -213,7 +213,7 @@ const coreCommands = {
         description: "Tag all moderators",
         usage: "mods",
         adminOnly: false,
-        execute: async ({ chatId, bot }) => {
+        execute: async ({ chatId, sock, bot }) => {
             const config = require('../config');
             const admins = config.get('admins');
             
@@ -313,13 +313,13 @@ const coreCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args, bot, sock, message }) => {
             if (!args[0]) {
-                return bot.sendCommandResponse(chatId, "❌ Usage: !setbio <bio_text>", sender, message);
+                return bot.sendMessage(chatId, "❌ Usage: !setbio <bio_text>", sender, message);
             }
             
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player) {
-                    return bot.sendCommandResponse(chatId, "❌ Please register first!", sender, message);
+                    return bot.sendMessage(chatId, "❌ Please register first!", sender, message);
                 }
                 
                 const newBio = args.join(' ');
@@ -330,7 +330,7 @@ const coreCommands = {
                 player.bio = newBio;
                 await player.save();
                 
-                await bot.sendCommandResponse(chatId, `✅ Bio updated successfully!\n📝 *New Bio:* ${newBio}`, sender, message);
+                await bot.sendMessage(chatId, `✅ Bio updated successfully!\n📝 *New Bio:* ${newBio}`, sender, message);
             } catch (error) {
                 console.error('SetBio error:', error);
                 await bot.sendCommandResponse(chatId, "❌ Error updating bio.", sender, message);
