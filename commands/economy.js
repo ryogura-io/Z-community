@@ -180,7 +180,7 @@ const economyCommands = {
                 await sock.sendMessage(chatId, { text:`💰 Daily claimed! +${dailyAmount} shards!`}, { quoted: message });
             } catch (error) {
                 console.error('Daily error:', error);
-                await sock.sendMessage(chatId, "❌ Error claiming daily reward.");
+                await sock.sendMessage(chatId, { text: "❌ Error claiming daily reward."}, { quoted: message });
             }
         }
     },
@@ -339,7 +339,7 @@ const economyCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args,sock, bot, isGroup }) => {
             if (!args[0] || isNaN(args[0])) {
-                return sock.sendMessage(chatId, "❌ Usage: !slot <amount>");
+                return sock.sendMessage(chatId, { text: "❌ Usage: !slot <amount>"}, { quoted: message });
             }
             
             try {
