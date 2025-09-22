@@ -131,7 +131,7 @@ const familiaCommands = {
         execute: async ({ chatId, bot, message, sock }) => {
             try {
                 const familias = await Familia.find();
-                if (familias.length === 0) return sock.sendMessage(chatId, "❌ No familias exist yet!");
+                if (familias.length === 0) return sock.sendMessage(chatId, { text:"❌ No familias exist yet!"}, { quoted: message });
 
                 let msg = "🏰 *Existing Familias:*\n\n";
                 for (const f of familias) {
