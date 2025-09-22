@@ -190,7 +190,7 @@ const economyCommands = {
         usage: "deposit <amount>",
         aliases: ['depo'],
         adminOnly: false,
-        execute: async ({ sender, chatId, args, bot }) => {
+        execute: async ({ sender, chatId, args,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, "❌ Usage: !deposit <amount>");
             }
@@ -270,7 +270,7 @@ const economyCommands = {
         description: "Attempt to steal shards from another player",
         usage: "rob (reply to user)",
         adminOnly: false,
-        execute: async ({ sender, chatId, message, bot }) => {
+        execute: async ({ sender, chatId, message,sock, bot }) => {
             let targetUser;
             
             if (message.message?.extendedTextMessage?.contextInfo?.participant) {
@@ -337,7 +337,7 @@ const economyCommands = {
         description: "Gamble your shards in slots (when enabled)",
         usage: "slot <amount>",
         adminOnly: false,
-        execute: async ({ sender, chatId, args, bot, isGroup }) => {
+        execute: async ({ sender, chatId, args,sock, bot, isGroup }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, "❌ Usage: !slot <amount>");
             }
@@ -487,7 +487,7 @@ const economyCommands = {
         usage: "withdraw <amount>",
         aliases: ['with'],
         adminOnly: false,
-        execute: async ({ sender, chatId, args, bot }) => {
+        execute: async ({ sender, chatId, args,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, "❌ Usage: !withdraw <amount>");
             }
