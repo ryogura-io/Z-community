@@ -508,7 +508,7 @@ const economyCommands = {
                 player.shards += amount;
                 await player.save();
                 
-                await sock.sendMessage(chatId, `🏦 Withdrew ${amount} shards from vault!`, { quoted: message });
+                await sock.sendMessage(chatId, {text: `🏦 Withdrew ${amount} shards from vault!`}, { quoted: message });
             } catch (error) {
                 console.error('Withdraw error:', error);
                 await sock.sendMessage(chatId,{ text: "❌ Error processing withdrawal."}, { quoted: message });
