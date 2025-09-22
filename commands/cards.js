@@ -555,7 +555,7 @@ const cardCommands = {
                     searchMsg += `\n... and ${foundCards.length - 10} more matches`;
                 }
 
-                await sock.sendMessage(chatId, { text: searchMsg},{quoted: messsage} );
+                await sock.sendMessage(chatId, { text: searchMsg},{quoted: message} );
             } catch (error) {
                 console.error("Search card error:", error);
                 await sock.sendMessage(chatId, { text: "❌ Error searching cards." }, { quoted: message });
