@@ -104,12 +104,12 @@ const mediaCommands = {
             }
 
             if (!targetMessage) {
-                await sock.sendMessage(chatId, '❌ Please reply to an *image* or a *short video* (max 10s) with the sticker command.');
+                await sock.sendMessage(chatId, { text: '❌ Please reply to an *image* or a *short video* (max 10s) with the sticker command.'}, { quoted: message });
                 return;
             }
 
             try {
-                await sock.sendMessage(chatId, '⏳ Converting to sticker...');
+                await sock.sendMessage(chatId, { text: '⏳ Converting to sticker...'}, { quoted: message });
 
                 // Download media
                 const buffer = await downloadMediaMessage(targetMessage, 'buffer', {});
@@ -136,7 +136,7 @@ const mediaCommands = {
 
             } catch (error) {
                 console.error('Sticker error:', error);
-                await sock.sendMessage(chatId, '❌ Error creating sticker.');
+                await sock.sendMessage(chatId, { text: '❌ Error creating sticker.'}, { quoted: message });
             }
         }
     },
@@ -151,12 +151,12 @@ const mediaCommands = {
 
             const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
             if (!quotedMessage?.stickerMessage) {
-                await sock.sendMessage(chatId, '❌ Please reply to a sticker with the take command.\nUsage: !take NewPack NewAuthor');
+                await sock.sendMessage(chatId, { text: '❌ Please reply to a sticker with the take command.\nUsage: !take NewPack NewAuthor'}, { quoted: message });
                 return;
             }
 
             if (args.length < 1) {
-                await sock.sendMessage(chatId, '❌ Please provide at least a pack name.\nUsage: !take NewPack NewAuthor');
+                await sock.sendMessage(chatId, { text: '❌ Please provide at least a pack name.\nUsage: !take NewPack NewAuthor'}, { quoted: message });
                 return;
             }
 
@@ -164,13 +164,13 @@ const mediaCommands = {
             const author = args[1] || "GURA-MD";
 
             try {
-                await sock.sendMessage(chatId, '⏳ Processing sticker...');
+                await sock.sendMessage(chatId, { text: '⏳ Processing sticker...'}, { quoted: message });
 
                 // Download sticker
                 const buffer = await downloadMediaMessage({ message: quotedMessage }, 'buffer', {});
 
                 if (!buffer) {
-                    await sock.sendMessage(chatId, '❌ Failed to download sticker.');
+                    await sock.sendMessage(chatId, { text: '❌ Failed to download sticker.'}, { quoted: message });
                     return;
                 }
 
@@ -188,7 +188,7 @@ const mediaCommands = {
 
             } catch (error) {
                 console.error('Take command error:', error);
-                await sock.sendMessage(chatId, '❌ Error changing sticker pack name.');
+                await sock.sendMessage(chatId, { text: '❌ Error changing sticker pack name.'}, { quoted: message } );
             }
         }
     },
@@ -206,7 +206,7 @@ const mediaCommands = {
                 const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
                 if (!quoted || !quoted.stickerMessage) {
-                    return await sock.sendMessage(chatId, '❌ Please reply to a *sticker* with this command.');
+                    return await sock.sendMessage(chatId, { text: '❌ Please reply to a *sticker* with this command.'}, { quoted: message });
                 }
 
                 // download sticker as buffer
@@ -221,7 +221,7 @@ const mediaCommands = {
 
             } catch (err) {
                 console.error('toimg command error:', err);
-                await sock.sendMessage(chatId, '⚠️ Failed to convert sticker to image.');
+                await sock.sendMessage(chatId, { text: '⚠️ Failed to convert sticker to image.'}, { quoted: message });
             }
         }
     }, 
@@ -238,7 +238,7 @@ const mediaCommands = {
                 const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
                 if (!quoted || !quoted.videoMessage) {
-                    return await sock.sendMessage(chatId, '❌ Please reply to a *video* with this command.');
+                    return await sock.sendMessage(chatId, { text: '❌ Please reply to a *video* with this command.'}, { quoted: message });
                 }
 
                 // download quoted video
@@ -275,7 +275,7 @@ const mediaCommands = {
 
             } catch (err) {
                 console.error('tomp3 command error:', err);
-                await sock.sendMessage(chatId, '⚠️ Failed to convert video to audio.');
+                await sock.sendMessage(chatId, { text: '⚠️ Failed to convert video to audio.'}, { quoted: message });
             }
         }
     }
