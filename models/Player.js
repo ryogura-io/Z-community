@@ -10,7 +10,7 @@ const playerSchema = new mongoose.Schema({
   
   // Economy
   shards: { type: Number, default: 0 },
-  crystals: { type: Number, default: 0 },
+  crystals: { type: Number, default: 50 },
   vault: { type: Number, default: 0 },
 
   // Deck & Collection
