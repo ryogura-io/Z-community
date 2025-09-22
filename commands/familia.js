@@ -73,7 +73,7 @@ const familiaCommands = {
                 newMember.familiaId = familia._id;
                 await newMember.save();
 
-                await sock.sendMessage(chatId, `✅ Added ${args[0]} to *${familia.name}*!`);
+                await sock.sendMessage(chatId,{ text: `✅ Added ${args[0]} to *${familia.name}*!`}, { quoted: message });
             } catch (error) {
                 console.error("Add familia member error:", error);
                 await sock.sendMessage(chatId, { text: "❌ Error adding member." }, { quoted: message });
@@ -115,7 +115,7 @@ const familiaCommands = {
 
                 await Player.updateOne({ userId: mentionedUser }, { $set: { familiaId: null } });
 
-                await sock.sendMessage(chatId, `❌ Removed ${args[0]} from *${familia.name}*!`);
+                await sock.sendMessage(chatId, { text:`❌ Removed ${args[0]} from *${familia.name}*!`}, { quoted: message });
             } catch (error) {
                 console.error("Remove familia member error:", error);
                 await sock.sendMessage(chatId, { text: "❌ Error removing member." }, { quoted: message });
@@ -128,24 +128,24 @@ const familiaCommands = {
         description: "List all familias",
         usage: "familialist",
         aliases: ['flist', 'famlist'],
-        execute: async ({ chatId, bot }) => {
+        execute: async ({ chatId, bot, message, sock }) => {
             try {
                 const familias = await Familia.find();
                 if (familias.length === 0) return sock.sendMessage(chatId, "❌ No familias exist yet!");
 
-                let message = "🏰 *Existing Familias:*\n\n";
+                let msg = "🏰 *Existing Familias:*\n\n";
                 for (const f of familias) {
                     // Fetch only the head player
                     const headPlayer = await Player.findOne({ userId: f.head });
                     const headName = headPlayer ? headPlayer.name : f.head;
 
-                    message += `👑 *${f.name}*\nHead: ${headName}\nMembers: ${f.members.length}\n\n`;
+                    msg += `👑 *${f.name}*\nHead: ${headName}\nMembers: ${f.members.length}\n\n`;
                 }
 
-                await sock.sendMessage(chatId, message);
+                await sock.sendMessage(chatId, { text:msg}, { quoted: message });
             } catch (error) {
                 console.error("Familialist error:", error);
-                await sock.sendMessage(chatId, "❌ Error fetching familia list.");
+                await sock.sendMessage(chatId,{ text: "❌ Error fetching familia list."}, { quoted: message });
             }
         }
     },
@@ -155,7 +155,7 @@ const familiaCommands = {
         description: "Show familia details",
         usage: "familia",
         aliases: ['myfamilia', 'fam'],
-        execute: async ({ sender, chatId, bot }) => {
+        execute: async ({ sender, chatId, sock, bot, message }) => {
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player?.familiaId) return sock.sendMessage(chatId, { text: "❌ You're not in a familia!" }, { quoted: message });
@@ -163,21 +163,21 @@ const familiaCommands = {
                 const familia = await Familia.findById(player.familiaId);
                 if (!familia) return sock.sendMessage(chatId, { text: "❌ Familia not found!" }, { quoted: message });
 
-                let message = `🏰 *${familia.name}*\n👑 Head: @${familia.head.split('@')[0]}\n\n`;
-                message += `👥 Members (${familia.members.length}):\n`;
+                let msg = `🏰 *${familia.name}*\n👑 Head: @${familia.head.split('@')[0]}\n\n`;
+                msg += `👥 Members (${familia.members.length}):\n`;
                 // Load all member documents at once
                 const members = await Player.find({ userId: { $in: familia.members } });
 
                 familia.members.forEach(memberId => {
                     const player = members.find(m => m.userId === memberId);
                     const displayName = player ? player.name : memberId.split('@')[0]; // fallback
-                    message += `- ${displayName}\n`;
+                    msg += `- ${displayName}\n`;
                 });
 
-                await sock.sendMessage(chatId, message, {mentions: [ familia.head ] });
+                await sock.sendMessage(chatId, { text:msg}, {quoted: message , mentions: [ familia.head ] });
             } catch (error) {
                 console.error("Familia info error:", error);
-                await sock.sendMessage(chatId, "❌ Error fetching familia info.");
+                await sock.sendMessage(chatId, { text:"❌ Error fetching familia info."}, { quoted: message });
             }
         }
     },
@@ -189,27 +189,27 @@ const familiaCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args, bot, sock, message }) => {
             if (!args[0]) {
-                return sock.sendMessage(chatId, "❌ Usage: !setdescription <description>");
+                return sock.sendMessage(chatId, { text:"❌ Usage: !setdescription <description>"}, { quoted: message });
             }
 
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player || !player.familiaId) {
-                    return sock.sendMessage(chatId, "❌ You don't have a familia!");
+                    return sock.sendMessage(chatId,{ text: "❌ You don't have a familia!"}, { quoted: message });
                 }
 
                 const familia = await Familia.findById(player.familiaId);
                 if (!familia || familia.head !== sender) {
-                    return sock.sendMessage(chatId, "❌ Only the familia head can set the description!");
+                    return sock.sendMessage(chatId, { text:"❌ Only the familia head can set the description!"}, { quoted: message });
                 }
 
                 familia.description = args.join(" ");
                 await familia.save();
 
-                await sock.sendMessage(chatId, `✅ Familia description updated!`);
+                await sock.sendMessage(chatId, { text:`✅ Familia description updated!`}, { quoted: message });
             } catch (error) {
                 console.error("Set description error:", error);
-                await sock.sendMessage(chatId, "❌ Error setting description.");
+                await sock.sendMessage(chatId, { text:"❌ Error setting description."}, { quoted: message });
             }
         }
     },
@@ -221,22 +221,22 @@ const familiaCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args, bot, sock, message }) => {
             if (!args[0]) {
-                return sock.sendMessage(chatId, "❌ Usage: !joinfamilia <familia_id>");
+                return sock.sendMessage(chatId, { text:"❌ Usage: !joinfamilia <familia_id>"}, { quoted: message });
             }
 
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player) {
-                    return sock.sendMessage(chatId, "❌ Please register first!");
+                    return sock.sendMessage(chatId, { text:"❌ Please register first!"}, { quoted: message });
                 }
 
                 if (player.familiaId) {
-                    return sock.sendMessage(chatId, "❌ You're already in a familia!");
+                    return sock.sendMessage(chatId, { text:"❌ You're already in a familia!"}, { quoted: message });
                 }
 
                 const familia = await Familia.findById(args[0]);
                 if (!familia) {
-                    return sock.sendMessage(chatId, "❌ Invalid familia ID!");
+                    return sock.sendMessage(chatId, { text:"❌ Invalid familia ID!"}, { quoted: message });
                 }
 
                 familia.members.push(sender);
@@ -245,10 +245,10 @@ const familiaCommands = {
                 player.familiaId = familia._id;
                 await player.save();
 
-                await sock.sendMessage(chatId, `🏰 Joined familia *${familia.name}*!`);
+                await sock.sendMessage(chatId, { text:`🏰 Joined familia *${familia.name}*!`}, { quoted: message });
             } catch (error) {
                 console.error("Join familia error:", error);
-                await sock.sendMessage(chatId, "❌ Error joining familia.");
+                await sock.sendMessage(chatId, { text:"❌ Error joining familia."}, { quoted: message });
             }
         }
     },
@@ -258,22 +258,22 @@ const familiaCommands = {
         usage: "leavefamilia",
         aliases: ['lfam'],
         adminOnly: false,
-        execute: async ({ sender, chatId, bot }) => {
+        execute: async ({ sender, chatId, sock, message, bot }) => {
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player || !player.familiaId) {
-                    return sock.sendMessage(chatId, "❌ You're not in a familia!");
+                    return sock.sendMessage(chatId, { text:"❌ You're not in a familia!"}, { quoted: message });
                 }
 
                 const familia = await Familia.findById(player.familiaId);
                 if (!familia) {
                     player.familiaId = null;
                     await player.save();
-                    return sock.sendMessage(chatId, "❌ Familia not found, removed from your profile.");
+                    return sock.sendMessage(chatId, { text:"❌ Familia not found, removed from your profile."}, { quoted: message });
                 }
 
                 if (familia.head === sender) {
-                    return sock.sendMessage(chatId, "❌ Familia head cannot leave! Transfer leadership first.", { quoted: message });
+                    return sock.sendMessage(chatId, { text:"❌ Familia head cannot leave! Transfer leadership first."}, { quoted: message });
                 }
 
                 familia.members = familia.members.filter(m => m !== sender);
@@ -282,10 +282,10 @@ const familiaCommands = {
                 player.familiaId = null;
                 await player.save();
 
-                await sock.sendMessage(chatId, `✅ Left familia *${familia.name}* successfully!`);
+                await sock.sendMessage(chatId, { text:`✅ Left familia *${familia.name}* successfully!`}, { quoted: message });
             } catch (error) {
                 console.error("Leave familia error:", error);
-                await sock.sendMessage(chatId, "❌ Error leaving familia.");
+                await sock.sendMessage(chatId, { text:"❌ Error leaving familia."}, { quoted: message });
             }
         }
     }
