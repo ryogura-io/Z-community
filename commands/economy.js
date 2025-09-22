@@ -177,7 +177,7 @@ const economyCommands = {
                 player.lastDaily = now;
                 await player.save();
                 
-                await sock.sendMessage(chatId, `💰 Daily claimed! +${dailyAmount} shards!`);
+                await sock.sendMessage(chatId, { text:`💰 Daily claimed! +${dailyAmount} shards!`}, { quoted: message });
             } catch (error) {
                 console.error('Daily error:', error);
                 await sock.sendMessage(chatId, "❌ Error claiming daily reward.");
