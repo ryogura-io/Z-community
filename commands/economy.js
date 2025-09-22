@@ -204,14 +204,14 @@ const economyCommands = {
                 }
                 
                 if (player.shards < amount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient shards!");
+                    return sock.sendMessage(chatId, "❌ Insufficient shards!", { quoted: message });
                 }
                 
                 player.shards -= amount;
                 player.vault += amount;
                 await player.save();
                 
-                await sock.sendMessage(chatId, `🏦 Deposited ${amount} shards to vault!`);
+                await sock.sendMessage(chatId, `🏦 Deposited ${amount} shards to vault!`, { quoted: message });
             } catch (error) {
                 console.error('Deposit error:', error);
                 await sock.sendMessage(chatId, "❌ Error processing deposit.");
@@ -245,11 +245,11 @@ const economyCommands = {
                 const target_player = await Player.findOne({ userId: targetUser });
                 
                 if (!sender_player || !target_player) {
-                    return sock.sendMessage(chatId, "❌ One or both users not registered!");
+                    return sock.sendMessage(chatId, "❌ One or both users not registered!", { quoted: message });
                 }
                 
                 if (sender_player.shards < amount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient shards!");
+                    return sock.sendMessage(chatId, "❌ Insufficient shards!", { quoted: message });
                 }
                 
                 sender_player.shards -= amount;
@@ -261,7 +261,7 @@ const economyCommands = {
                 await sock.sendMessage(chatId, `*${sender_player.name}* sent 💸 *${amount}* shards to *${target_player.name}* successfully!`);
             } catch (error) {
                 console.error('Give error:', error);
-                await sock.sendMessage(chatId, "❌ Error transferring shards.");
+                await sock.sendMessage(chatId, "❌ Error transferring shards.", { quoted: message });
             }
         }
     },
@@ -299,13 +299,13 @@ const economyCommands = {
                     await robber.save();
                     await victim.save();
                     
-                    await sock.sendMessage(chatId, `🏴‍☠️ Robbery successful! Stole ${stolenAmount} shards!`);
+                    await sock.sendMessage(chatId, `🏴‍☠️ Robbery successful! Stole ${stolenAmount} shards!`, { quoted: message });
                 } else {
                     const penalty = Math.floor(robber.shards * 0.05); // 5% penalty
                     robber.shards = Math.max(0, robber.shards - penalty);
                     await robber.save();
                     
-                    await sock.sendMessage(chatId, `🚫 Robbery failed! Lost ${penalty} shards as penalty!`);
+                    await sock.sendMessage(chatId, `🚫 Robbery failed! Lost ${penalty} shards as penalty!`, { quoted: message });
                 }
             } catch (error) {
                 console.error('Rob error:', error);
@@ -501,17 +501,17 @@ const economyCommands = {
                 }
                 
                 if (player.vault < amount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient vault balance!");
+                    return sock.sendMessage(chatId, "❌ Insufficient vault balance!", { quoted: message });
                 }
                 
                 player.vault -= amount;
                 player.shards += amount;
                 await player.save();
                 
-                await sock.sendMessage(chatId, `🏦 Withdrew ${amount} shards from vault!`);
+                await sock.sendMessage(chatId, `🏦 Withdrew ${amount} shards from vault!`, { quoted: message });
             } catch (error) {
                 console.error('Withdraw error:', error);
-                await sock.sendMessage(chatId, "❌ Error processing withdrawal.");
+                await sock.sendMessage(chatId, "❌ Error processing withdrawal.", { quoted: message });
             }
         }
     }
