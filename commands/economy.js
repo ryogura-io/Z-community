@@ -223,7 +223,7 @@ const economyCommands = {
         description: "Send shards to another player",
         usage: "give <amount> (reply to user or mention)",
         adminOnly: false,
-        execute: async ({ sender, chatId, args, message, bot }) => {
+        execute: async ({ sender, chatId, args, message,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, "❌ Usage: !give <amount> (reply to user)");
             }
