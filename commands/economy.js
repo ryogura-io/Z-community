@@ -86,7 +86,7 @@ const economyCommands = {
                 player.shards += 5000;
                 await player.save();
                 
-                await sock.sendMessage(chatId, { text: `✅ **Purchase Successful!**\n\n🛒 Item: 5000 Shards\n💎 Cost: 50 crystals\n💰 New Balance: ${player.shards} shards, ${player.crystals} crystals` }, {quoted: message});
+                await sock.sendMessage(chatId, { text: `✅ *Purchase Successful!*\n\n🛒 Item: 5000 Shards\n💎 Cost: 50 crystals\n💰 New Balance: ${player.shards} shards, ${player.crystals} crystals` }, {quoted: message});
                 
             } else if (itemNumber === 2) {
                 // Buy common card pack
@@ -109,13 +109,13 @@ const economyCommands = {
                     player.collection.push(randomCard._id);
                     await player.save();
                     
-                    const cardDetails = `🎴 **${randomCard.name}**\n` +
-                        `🏷️ Series: ${randomCard.series}\n` +
-                        `⭐ Tier: ${randomCard.tier}\n` +
-                        `👨‍🎨 Maker: ${randomCard.maker}`;
+                    const cardDetails = `🎴 *Name:* ${randomCard.name}\n` +
+                        `🏷️ *Series:* ${randomCard.series}\n` +
+                        `⭐ *Tier:* ${randomCard.tier}\n` +
+                        `👨‍🎨 *Maker:* ${randomCard.maker}`;
                     
-                    const successMsg = `✅ **Common Card Pack Opened!**\n\n` +
-                        `🎁 You have gotten a tier 4 card!\n\n` +
+                    const successMsg = `✅ *Common Card Pack Opened!*\n\n` +
+                        `🎁 *You have gotten a tier 4 card!*\n\n` +
                         `${cardDetails}\n\n` +
                         `💰 Bonus: +1000 shards\n` +
                         `💎 New Balance: ${player.shards} shards, ${player.crystals} crystals`;
