@@ -192,7 +192,7 @@ const economyCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
-                return sock.sendMessage(chatId, "❌ Usage: !deposit <amount>");
+                return sock.sendMessage(chatId, {text: "❌ Usage: !deposit <amount>"}, { quoted: message });
             }
             
             try {
@@ -204,7 +204,7 @@ const economyCommands = {
                 }
                 
                 if (player.shards < amount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient shards!", { quoted: message });
+                    return sock.sendMessage(chatId, {text:"❌ Insufficient shards!"}, { quoted: message });
                 }
                 
                 player.shards -= amount;
@@ -214,7 +214,7 @@ const economyCommands = {
                 await sock.sendMessage(chatId, `🏦 Deposited ${amount} shards to vault!`, { quoted: message });
             } catch (error) {
                 console.error('Deposit error:', error);
-                await sock.sendMessage(chatId, "❌ Error processing deposit.");
+                await sock.sendMessage(chatId, {text: "❌ Error processing deposit."}, { quoted: message });
             }
         }
     },
@@ -225,7 +225,7 @@ const economyCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args, message,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
-                return sock.sendMessage(chatId, "❌ Usage: !give <amount> (reply to user)");
+                return sock.sendMessage(chatId, {text: "❌ Usage: !give <amount> (reply to user)"}, { quoted: message });
             }
             
             const amount = parseInt(args[0]);
@@ -237,7 +237,7 @@ const economyCommands = {
             } else if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
                 targetUser = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
             } else {
-                return sock.sendMessage(chatId, "❌ Reply to a user or mention them!");
+                return sock.sendMessage(chatId, {text: "❌ Reply to a user or mention them!"}, { quoted: message });
             }
             
             try {
@@ -245,11 +245,11 @@ const economyCommands = {
                 const target_player = await Player.findOne({ userId: targetUser });
                 
                 if (!sender_player || !target_player) {
-                    return sock.sendMessage(chatId, "❌ One or both users not registered!", { quoted: message });
+                    return sock.sendMessage(chatId, {text: "❌ One or both users not registered!"}, { quoted: message });
                 }
                 
                 if (sender_player.shards < amount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient shards!", { quoted: message });
+                    return sock.sendMessage(chatId, {text: "❌ Insufficient shards!"}, { quoted: message });
                 }
                 
                 sender_player.shards -= amount;
@@ -258,10 +258,10 @@ const economyCommands = {
                 await sender_player.save();
                 await target_player.save();
                 
-                await sock.sendMessage(chatId, `*${sender_player.name}* sent 💸 *${amount}* shards to *${target_player.name}* successfully!`);
+                await sock.sendMessage(chatId, {text: `*${sender_player.name}* sent 💸 *${amount}* shards to *${target_player.name}* successfully!`}, { quoted: message });
             } catch (error) {
                 console.error('Give error:', error);
-                await sock.sendMessage(chatId, "❌ Error transferring shards.", { quoted: message });
+                await sock.sendMessage(chatId, {text:"❌ Error transferring shards."}, { quoted: message });
             }
         }
     },
@@ -278,7 +278,7 @@ const economyCommands = {
             } else if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
                 targetUser = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
             } else {
-                return sock.sendMessage(chatId, "❌ Reply to a user to rob them!");
+                return sock.sendMessage(chatId, {text: "❌ Reply to a user to rob them!"}, { quoted: message });
             }
             
             try {
@@ -286,7 +286,7 @@ const economyCommands = {
                 const victim = await Player.findOne({ userId: targetUser });
                 
                 if (!robber || !victim) {
-                    return sock.sendMessage(chatId, "❌ One or both users not registered!");
+                    return sock.sendMessage(chatId, {text: "❌ One or both users not registered!"}, { quoted: message });
                 }
                 
                 const success = Math.random() < 0.3; // 30% success rate
@@ -299,17 +299,17 @@ const economyCommands = {
                     await robber.save();
                     await victim.save();
                     
-                    await sock.sendMessage(chatId, `🏴‍☠️ Robbery successful! Stole ${stolenAmount} shards!`, { quoted: message });
+                    await sock.sendMessage(chatId, {text: `🏴‍☠️ Robbery successful! Stole ${stolenAmount} shards!`}, { quoted: message });
                 } else {
                     const penalty = Math.floor(robber.shards * 0.05); // 5% penalty
                     robber.shards = Math.max(0, robber.shards - penalty);
                     await robber.save();
                     
-                    await sock.sendMessage(chatId, `🚫 Robbery failed! Lost ${penalty} shards as penalty!`, { quoted: message });
+                    await sock.sendMessage(chatId, {text: `🚫 Robbery failed! Lost ${penalty} shards as penalty!`}, { quoted: message });
                 }
             } catch (error) {
                 console.error('Rob error:', error);
-                await sock.sendMessage(chatId, "❌ Error processing robbery.");
+                await sock.sendMessage(chatId, {text: "❌ Error processing robbery."}, { quoted: message });
             }
         }
     },
@@ -351,7 +351,7 @@ const economyCommands = {
                 const groupSlotsEnabled = group?.slot === "enabled";
                 
                 if (!groupSlotsEnabled) {
-                    return sock.sendMessage(chatId, "🎰 Slots are currently disabled in this group!");
+                    return sock.sendMessage(chatId, {text: "🎰 Slots are currently disabled in this group!"}, { quoted: message });
                 }
                 const player = await Player.findOne({ userId: sender });
                 
@@ -359,10 +359,10 @@ const economyCommands = {
                 if (player.familiaId) {
                     const familia = await Familia.findById(player.familiaId);
                     if (!familia || familia.slot !== "enabled") {
-                        return sock.sendMessage(chatId, "🎰 Slots are disabled for your familia!");
+                        return sock.sendMessage(chatId, {text: "🎰 Slots are disabled for your familia!"}, { quoted: message });
                     }
                 } else {
-                    return sock.sendMessage(chatId, "🎰 You need to be in a familia with enabled slots to play!");
+                    return sock.sendMessage(chatId, {text: "🎰 You need to be in a familia with enabled slots to play!"}, { quoted: message });
                 }
                 
                 const betAmount = parseInt(args[0]);
@@ -372,11 +372,11 @@ const economyCommands = {
                 }
                 
                 if (betAmount < 10) {
-                    return sock.sendMessage(chatId, "❌ Minimum bet is 10 shards!");
+                    return sock.sendMessage(chatId, {text: "❌ Minimum bet is 10 shards!"}, { quoted: message });
                 }
                 
                 if (player.shards < betAmount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient shards!");
+                    return sock.sendMessage(chatId,{text:  "❌ Insufficient shards!"}, { quoted: message });
                 }
                 
                 const symbols = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎'];
@@ -435,10 +435,10 @@ const economyCommands = {
                     resultMsg += `😔 *LOST!* -${betAmount} shards`;
                 }
                 
-                await sock.sendMessage(chatId, resultMsg);
+                await sock.sendMessage(chatId, {text: resultMsg}, { quoted: message });
             } catch (error) {
                 console.error('Slot error:', error);
-                await sock.sendMessage(chatId, "❌ Error playing slots.");
+                await sock.sendMessage(chatId, {text: "❌ Error playing slots."}, { quoted: message });
             }
         }
     },
@@ -455,10 +455,10 @@ const economyCommands = {
                     return sock.sendMessage(chatId, { text: "❌ Please register first using !register <name>" }, { quoted: message });
                 }
                 
-                await sock.sendMessage(chatId, `💰 You have *${player.shards.toLocaleString()}* shards`);
+                await sock.sendMessage(chatId, {text: `💰 You have *${player.shards.toLocaleString()}* shards`}, { quoted: message });
             } catch (error) {
                 console.error('Shards error:', error);
-                await sock.sendMessage(chatId, "❌ Error fetching balance.");
+                await sock.sendMessage(chatId, {text: "❌ Error fetching balance."}, { quoted: message });
             }
         }
     },
@@ -474,10 +474,10 @@ const economyCommands = {
                     return sock.sendMessage(chatId, { text: "❌ Please register first using !register <name>" }, { quoted: message });
                 }
                 
-                await sock.sendMessage(chatId, `🏦 Vault: *${player.vault.toLocaleString()}* shards`);
+                await sock.sendMessage(chatId, {text: `🏦 Vault: *${player.vault.toLocaleString()}* shards`}, { quoted: message });
             } catch (error) {
                 console.error('Vault error:', error);
-                await sock.sendMessage(chatId, "❌ Error fetching vault balance.");
+                await sock.sendMessage(chatId, {text: "❌ Error fetching vault balance."}, { quoted: message });
             }
         }
     },
@@ -489,7 +489,7 @@ const economyCommands = {
         adminOnly: false,
         execute: async ({ sender, chatId, args,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
-                return sock.sendMessage(chatId, "❌ Usage: !withdraw <amount>");
+                return sock.sendMessage(chatId, {text: "❌ Usage: !withdraw <amount>"}, { quoted: message });
             }
             
             try {
@@ -501,7 +501,7 @@ const economyCommands = {
                 }
                 
                 if (player.vault < amount) {
-                    return sock.sendMessage(chatId, "❌ Insufficient vault balance!", { quoted: message });
+                    return sock.sendMessage(chatId, {text: "❌ Insufficient vault balance!"}, { quoted: message });
                 }
                 
                 player.vault -= amount;
@@ -511,7 +511,7 @@ const economyCommands = {
                 await sock.sendMessage(chatId, `🏦 Withdrew ${amount} shards from vault!`, { quoted: message });
             } catch (error) {
                 console.error('Withdraw error:', error);
-                await sock.sendMessage(chatId, "❌ Error processing withdrawal.", { quoted: message });
+                await sock.sendMessage(chatId,{ text: "❌ Error processing withdrawal."}, { quoted: message });
             }
         }
     }
