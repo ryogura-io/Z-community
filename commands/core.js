@@ -213,7 +213,7 @@ const coreCommands = {
         description: "Tag all moderators",
         usage: "mods",
         adminOnly: false,
-        execute: async ({ chatId, sock, bot }) => {
+        execute: async ({ chatId, sock,message, bot }) => {
             const config = require('../config');
             const admins = config.get('admins');
             
