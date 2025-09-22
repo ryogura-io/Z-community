@@ -930,17 +930,17 @@ const cardCommands = {
 
                 try {
                     // Create base image (800x600) with white background
-                    const cardWidth = 190;
-                    const cardHeight = 250;
-                    const padding = 5;
-                    const startX = (800 - (4 * cardWidth + 3 * padding)) / 2;
-                    const startY = 5;
+                    const cardWidth = 230;
+                    const cardHeight = 300;
+                    const padding = 3;
+                    const startX = 2;
+                    const startY = 2;
 
                     // Create white background
                     const background = await sharp({
                         create: {
                             width: 600,
-                            height: 800,
+                            height: 910,
                             channels: 4,
                             background: { r: 255, g: 255, b: 255, alpha: 1 },
                         },
@@ -1023,10 +1023,19 @@ const cardCommands = {
                         .composite(composite)
                         .png()
                         .toBuffer();
+                    let deckMsg = `🃏 *${player.name}'s Deck*\n\n`;
 
+                    for (let i = 0; i < 12; i++) {
+                        const card = player.deck[i];
+                        if (card) {
+                            deckMsg += `🎴 *${i + 1}.* ${card.name} — Tier ${card.tier}\n`;
+                        }
+                    }
+
+                    deckMsg += `\n💡 Use !deck <number> to see individual cards`;
                     const caption = `🃏 *${player.name}'s Deck*\n📊 ${deckCards.length}/12 slots filled\n💡 Use !deck <number> to see individual cards`;
 
-                    return bot.sendImage(chatId, imageBuffer, caption);
+                    return bot.sendImage(chatId, imageBuffer, deckMsg);
                 } catch (sharpError) {
                     console.error("Sharp deck generation error:", sharpError);
 
