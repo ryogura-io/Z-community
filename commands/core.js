@@ -167,7 +167,7 @@ const coreCommands = {
         usage: "leaderboard [cards|shards]",
         aliases: ['lb'],
         adminOnly: false,
-        execute: async ({ chatId, args,sock, bot }) => {
+        execute: async ({ chatId, args,sock,message, bot }) => {
             try {
                 const type = args[0] || 'exp';
                 let sortField = 'exp';
