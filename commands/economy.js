@@ -190,7 +190,7 @@ const economyCommands = {
         usage: "deposit <amount>",
         aliases: ['depo'],
         adminOnly: false,
-        execute: async ({ sender, chatId, args,sock, bot }) => {
+        execute: async ({ sender, chatId,message, args,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, {text: "❌ Usage: !deposit <amount>"}, { quoted: message });
             }
@@ -211,7 +211,7 @@ const economyCommands = {
                 player.vault += amount;
                 await player.save();
                 
-                await sock.sendMessage(chatId, `🏦 Deposited ${amount} shards to vault!`, { quoted: message });
+                await sock.sendMessage(chatId, {text: `🏦 Deposited ${amount} shards to vault!`}, { quoted: message });
             } catch (error) {
                 console.error('Deposit error:', error);
                 await sock.sendMessage(chatId, {text: "❌ Error processing deposit."}, { quoted: message });
@@ -319,11 +319,11 @@ const economyCommands = {
         usage: "shop",
         adminOnly: false,
         execute: async ({ sender, chatId, sock, message }) => {
-            const shopMsg = `🏪 **ZEN SHOP** 🏪\n\n` +
-                `1️⃣ **Buy 5000 shards for 50 crystals**\n` +
+            const shopMsg = `🏪 *ZEN SHOP* 🏪\n\n` +
+                `1️⃣ *Buy 5000 shards for 50 crystals*\n` +
                 `   💰 Cost: 50 💎\n` +
                 `   📦 Reward: 5000 shards\n\n` +
-                `2️⃣ **Buy a common card pack**\n` +
+                `2️⃣ *Buy a common card pack*\n` +
                 `   💰 Cost: 20 💎\n` +
                 `   📦 Reward: Random tier 4 card + 1000 shards\n` +
                 `   📝 Description: Get a random tier 4 card and 1000 shards\n\n` +
@@ -487,7 +487,7 @@ const economyCommands = {
         usage: "withdraw <amount>",
         aliases: ['with'],
         adminOnly: false,
-        execute: async ({ sender, chatId, args,sock, bot }) => {
+        execute: async ({ sender, chatId,message, args,sock, bot }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, {text: "❌ Usage: !withdraw <amount>"}, { quoted: message });
             }
