@@ -80,7 +80,7 @@ class Bot {
             }
             
             if (!this.commands[commandName]) {
-                await this.sendMessage(chatId, `❌ Unknown command: *${commandName}*\n💡 Try ${config.get("prefix")}help for a list of commands.`);
+                await this.sock.sendMessage(chatId, { text: `❌ Unknown command: *${commandName}*\n💡 Try ${config.get("prefix")}help for a list of commands.` }, { quoted: message });
                 return;
             }
             
@@ -148,42 +148,6 @@ class Bot {
             });
         } catch (error) {
             console.error('Error sending message:', error);
-        }
-    }
-
-    async sendMessageWithMention(chatId, text, mentionedJid, originalMessage = null, options = {}) {
-        try {
-            const messageOptions = {
-                text: text,
-                mentions: [mentionedJid],
-                ...options
-            };
-
-            if (originalMessage) {
-                messageOptions.quoted = originalMessage;
-            }
-
-            await this.msgQueue.sendMessage(chatId, messageOptions);
-        } catch (error) {
-            console.error('Error sending message with mention:', error);
-        }
-    }
-
-    // Helper method for command responses with automatic quoting
-    async sendCommandResponse(chatId, text, sender, originalMessage, options = {}) {
-        try {
-            const messageOptions = {
-                text: text,
-                ...options
-            };
-
-            if (originalMessage) {
-                messageOptions.quoted = originalMessage;
-            }
-
-            await this.msgQueue.sendMessage(chatId, messageOptions);
-        } catch (error) {
-            console.error('Error sending command response:', error);
         }
     }
 
