@@ -273,7 +273,7 @@ const familiaCommands = {
                 }
 
                 if (familia.head === sender) {
-                    return sock.sendMessage(chatId, "❌ Familia head cannot leave! Transfer leadership first.");
+                    return sock.sendMessage(chatId, "❌ Familia head cannot leave! Transfer leadership first.", { quoted: message });
                 }
 
                 familia.members = familia.members.filter(m => m !== sender);
