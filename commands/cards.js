@@ -899,19 +899,20 @@ const cardCommands = {
                             `❌ No card at deck position ${args[0]}!`,
                         );
                     }
-
+const axios = require("axios");
                     const cardMsg =
-                        `🎴 *Deck Position ${args[0]}*\n\n` +
+                        `🎴 *┌──「 *CARD DETAILS* 」*\n\n` +
                         `📜 *Name:* ${card.name}\n` +
                         `⭐ *Tier:* ${card.tier}\n` +
                         `🎭 *Series:* ${card.series}\n` +
                         `👨‍🎨 *Maker:* ${card.maker}`;
 
-                    const imgBuffer = (
+                 const imgBuffer = (
                         await axios.get(card.img, {
                             responseType: "arraybuffer",
                         })
                     ).data;
+
                     return bot.sendImage(chatId, imgBuffer, cardMsg);
                 }
 
@@ -926,7 +927,7 @@ const cardCommands = {
 
                 // Generate 4x3 grid image using sharp (more reliable)
                 const sharp = require("sharp");
-                const axios = require("axios");
+                
 
                 try {
                     // Create base image (800x600) with white background
@@ -1062,7 +1063,7 @@ const cardCommands = {
     sellcard: {
         description: "Put a card from your collection on sale in this group",
         usage: "sellcard <collectionindex> <price>",
-        aliases: ["sell"],
+        aliases: ["sc"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, bot, isGroup }) => {
             try {
@@ -1169,15 +1170,15 @@ const cardCommands = {
 
                     const saleMsg =
                         `🏪 *CARD FOR SALE* 🏪\n\n` +
-                        `🎴 **${cardToSell.name}**\n` +
-                        `⭐ Tier: ${cardToSell.tier}\n` +
-                        `🎭 Series: ${cardToSell.series}\n` +
-                        `👨‍🎨 Maker: ${cardToSell.maker}\n\n` +
+                        `🎴 *Name:* ${cardToSell.name}\n` +
+                        `⭐ *Tier:* ${cardToSell.tier}\n` +
+                        `🎭 *Series:* ${cardToSell.series}\n` +
+                        `👨‍🎨 *Maker:* ${cardToSell.maker}\n\n` +
                         `💰 **Price: ${price} Shards**\n` +
-                        `🔑 **Buy Code: ${saleCaptcha}**\n\n` +
+                        `🔑 **Buy captcha: ${saleCaptcha}**\n\n` +
                         `👤 Seller: ${player.name}\n` +
                         `⏰ Expires in 10 minutes\n\n` +
-                        `💡 Type *!buycard ${saleCaptcha}* to purchase`;
+                        `💡 Use *!buycard ${saleCaptcha}* to purchase`;
 
                     await bot.sendImage(chatId, cardImgResponse.data, saleMsg);
 
@@ -1219,15 +1220,15 @@ const cardCommands = {
                     // Fallback to text message
                     const saleMsg =
                         `🏪 *CARD FOR SALE* 🏪\n\n` +
-                        `🎴 **${cardToSell.name}**\n` +
-                        `⭐ Tier: ${cardToSell.tier}\n` +
-                        `🎭 Series: ${cardToSell.series}\n` +
-                        `👨‍🎨 Maker: ${cardToSell.maker}\n\n` +
-                        `💰 **Price: ${price} Shards**\n` +
-                        `🔑 **Buy Code: ${saleCaptcha}**\n\n` +
+                        `🎴 *Name:* ${cardToSell.name}\n` +
+                        `⭐ *Tier:* ${cardToSell.tier}\n` +
+                        `🎭 *Series:* ${cardToSell.series}\n` +
+                        `👨‍🎨 *Maker:* ${cardToSell.maker}\n\n` +
+                        `💰 *Price: ${price} Shards*\n` +
+                        `🔑 *Buy Captcha: ${saleCaptcha}*\n\n` +
                         `👤 Seller: ${player.name}\n` +
-                        `⏰ Expires in 10 minutes\n\n` +
-                        `💡 Type *!buycard ${saleCaptcha}* to purchase`;
+                        `⏰ Expires in 10 minutes\n` +
+                        `💡 Use \`*!buycard ${saleCaptcha}*\` to purchase`;
 
                     await bot.sendMessage(chatId, saleMsg);
                 }
@@ -1241,7 +1242,7 @@ const cardCommands = {
     buycard: {
         description: "Buy a card that's for sale in this group",
         usage: "buycard <salecaptcha>",
-        aliases: ["buy"],
+        aliases: ["bc"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, bot, isGroup }) => {
             try {
@@ -1344,10 +1345,10 @@ const cardCommands = {
 
                     const purchaseMsg =
                         `✅ *PURCHASE SUCCESSFUL!* ✅\n\n` +
-                        `🎴 **${sale.cardId.name}** (Tier ${sale.cardId.tier})\n` +
-                        `💰 Price: ${sale.price} shards\n\n` +
-                        `👤 Buyer: ${buyer.name}\n` +
-                        `👤 Seller: ${seller.name}\n\n` +
+                        `🎴 *Name:* ${sale.cardId.name} (Tier ${sale.cardId.tier})\n` +
+                        `💰 *Price*: ${sale.price} shards\n\n` +
+                        `👤 *Buyer*: ${buyer.name}\n` +
+                        `👤 *Seller*: ${seller.name}\n\n` +
                         `💎 ${buyer.name}'s remaining shards: ${buyer.shards}\n` +
                         `💎 ${seller.name}'s new balance: ${seller.shards}`;
 
@@ -1372,7 +1373,7 @@ const cardCommands = {
     cancelsale: {
         description: "Cancel your current card sale in this group",
         usage: "cancelsale",
-        aliases: ["cancell", "cancel"],
+        aliases: ["cs"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, bot, isGroup }) => {
             try {
