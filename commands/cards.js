@@ -939,7 +939,7 @@ const cardCommands = {
                     // Create white background
                     const background = await sharp({
                         create: {
-                            width: 600,
+                            width: 710,
                             height: 910,
                             channels: 4,
                             background: { r: 255, g: 255, b: 255, alpha: 1 },
