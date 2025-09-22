@@ -431,7 +431,7 @@ const cardCommands = {
         usage: "series <series_name>",
         aliases: ["ss", "seriessearch"],
         adminOnly: false,
-        execute: async ({ sender, chatId, args, bot, sock, message }) => {
+        execute: async ({ sender, message, chatId, args, bot, sock }) => {
             if (!args[0]) {
                 return sock.sendMessage(chatId, { text: "❌ Usage: !series <series_name>" }, { quoted: message });
             }
@@ -500,7 +500,7 @@ const cardCommands = {
         usage: "searchcard <card_name>",
         aliases: ["fc", "findcard"],
         adminOnly: false,
-        execute: async ({ sender, chatId, args, bot, sock, message }) => {
+        execute: async ({ sender, message, chatId, args, bot, sock}) => {
             if (!args[0]) {
                 return sock.sendMessage(chatId, { text: "❌ Usage: !searchcard <card_name>" }, { quoted: message });
             }
