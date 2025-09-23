@@ -7,7 +7,7 @@ const economyCommands = {
         usage: "economy",
         aliases: ['econ'],
         adminOnly: false,
-        execute: async ({ chatId, bot, sock, message }) => {
+        execute: async ({ chatId, sock, message }) => {
             try {
                 const totalShards = await Player.aggregate([
                     { $group: { _id: null, total: { $sum: "$shards" } } }
@@ -36,7 +36,7 @@ const economyCommands = {
         description: "Claim your welcome bonus (one-time only)",
         usage: "bonus",
         adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock, message }) => {
+        execute: async ({ sender, chatId, sock, message }) => {
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player) {
@@ -152,7 +152,7 @@ const economyCommands = {
         description: "Claim your daily shards (24h cooldown)",
         usage: "daily",
         adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock, message }) => {
+        execute: async ({ sender, chatId, sock, message }) => {
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player) {
@@ -190,7 +190,7 @@ const economyCommands = {
         usage: "deposit <amount>",
         aliases: ['depo'],
         adminOnly: false,
-        execute: async ({ sender, chatId,message, args,sock, bot }) => {
+        execute: async ({ sender, chatId,message, args, sock }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, {text: "❌ Usage: !deposit <amount>"}, { quoted: message });
             }
@@ -223,7 +223,7 @@ const economyCommands = {
         description: "Send shards to another player",
         usage: "give <amount> (reply to user or mention)",
         adminOnly: false,
-        execute: async ({ sender, chatId, args, message,sock, bot }) => {
+        execute: async ({ sender, chatId, args, message,sock }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, {text: "❌ Usage: !give <amount> (reply to user)"}, { quoted: message });
             }
@@ -270,7 +270,7 @@ const economyCommands = {
         description: "Attempt to steal shards from another player",
         usage: "rob (reply to user)",
         adminOnly: false,
-        execute: async ({ sender, chatId, message,sock, bot }) => {
+        execute: async ({ sender, chatId, message,sock }) => {
             let targetUser;
             
             if (message.message?.extendedTextMessage?.contextInfo?.participant) {
@@ -292,7 +292,7 @@ const economyCommands = {
                 const success = Math.random() < 0.3; // 30% success rate
                 
                 if (success) {
-                    const stolenAmount = Math.floor(victim.shards * 0.1); // 10% of victim's shards
+                    const stolenAmount = Math.floor(victim.shards * 0.001); // 0.1% of victim's shards
                     victim.shards -= stolenAmount;
                     robber.shards += stolenAmount;
                     
@@ -301,7 +301,7 @@ const economyCommands = {
                     
                     await sock.sendMessage(chatId, {text: `🏴‍☠️ Robbery successful! Stole ${stolenAmount} shards!`}, { quoted: message });
                 } else {
-                    const penalty = Math.floor(robber.shards * 0.05); // 5% penalty
+                    const penalty = Math.floor(robber.shards * 0.005); // 0.5% penalty
                     robber.shards = Math.max(0, robber.shards - penalty);
                     await robber.save();
                     
@@ -337,7 +337,7 @@ const economyCommands = {
         description: "Gamble your shards in slots (when enabled)",
         usage: "slot <amount>",
         adminOnly: false,
-        execute: async ({ sender, chatId, args,sock, bot, isGroup }) => {
+        execute: async ({ sender, chatId, args,sock, message, isGroup }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, { text: "❌ Usage: !slot <amount>"}, { quoted: message });
             }
@@ -381,12 +381,12 @@ const economyCommands = {
                 
                 const symbols = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎'];
                 const probabilities = {
-                    '🍒': 30,  // Cherry - 30%
-                    '🍋': 25,  // Lemon - 25%
-                    '🍊': 20,  // Orange - 20%
-                    '🍇': 15,  // Grape - 15%
-                    '⭐': 8,   // Star - 8%
-                    '💎': 2    // Diamond - 2%
+                    '🍒': 25,  // Cherry - 25%
+                    '🍋': 20,  // Lemon - 20%
+                    '🍊': 18,  // Orange - 18%
+                    '🍇': 17,  // Grape - 17%
+                    '⭐': 15,   // Star - 15%
+                    '💎': 5    // Diamond - 5%
                 };
                 
                 function getWeightedSymbol() {
@@ -406,8 +406,8 @@ const economyCommands = {
                 let multiplier = 0;
                 if (reel1 === reel2 && reel2 === reel3) {
                     // Triple match
-                    if (reel1 === '💎') multiplier = 10;      // Diamond x10
-                    else if (reel1 === '⭐') multiplier = 5;  // Star x5
+                    if (reel1 === '💎') multiplier = 6;      // Diamond x10
+                    else if (reel1 === '⭐') multiplier = 4;  // Star x5
                     else if (reel1 === '🍇') multiplier = 3; // Grape x3
                     else multiplier = 2;                    // Others x2
                 } else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) {
@@ -448,7 +448,7 @@ const economyCommands = {
         usage: "shards",
         aliases: ['money'],
         adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock, message }) => {
+        execute: async ({ sender, chatId, sock, message }) => {
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player) {
@@ -467,7 +467,7 @@ const economyCommands = {
         description: "Check your vault balance",
         usage: "vault",
         adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock, message }) => {
+        execute: async ({ sender, chatId, sock, message }) => {
             try {
                 const player = await Player.findOne({ userId: sender });
                 if (!player) {
@@ -487,7 +487,7 @@ const economyCommands = {
         usage: "withdraw <amount>",
         aliases: ['with'],
         adminOnly: false,
-        execute: async ({ sender, chatId,message, args,sock, bot }) => {
+        execute: async ({ sender, chatId,message, args,sock }) => {
             if (!args[0] || isNaN(args[0])) {
                 return sock.sendMessage(chatId, {text: "❌ Usage: !withdraw <amount>"}, { quoted: message });
             }
