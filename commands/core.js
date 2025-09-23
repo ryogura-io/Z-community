@@ -266,7 +266,7 @@ const coreCommands = {
                 try {
                     pfpUrl = await sock.profilePictureUrl(target, "image");
                 } catch {
-                    pfpUrl = "https://i.ibb.co/1m1dFHS/default-pfp.png";
+                    pfpUrl = "https://i.waifu.pics/mJkPaVR.png";
                 }
 
                 const totalCards = player.collection.length;
