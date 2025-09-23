@@ -270,16 +270,26 @@ const cardCommands = {
                         );
                     }
 
-                    let collectionMsg = `🎴 *${player.name}'s Collection (${totalCards} cards)*\n\n`;
-                    player.collection.forEach((card, index) => {
-                        collectionMsg += `*${index + 1}. ${card.name}* [${card.tier}]\n    Series: ${card.series}\n`;
-                    });
+                    // Generate collection text
+    let collectionMsg = `🎴 *${player.name}'s Collection (${totalCards} cards)*\n\n`;
+    player.collection.forEach((card, index) => {
+        collectionMsg += `*${index + 1}. ${card.name}* [${card.tier}]\n    Series: ${card.series}\n`;
+    });
 
-                    await sock.sendMessage(
-                        chatId,
-                        { text: collectionMsg },
-                        { quoted: message },
-                    );
+    // Use the first card's image as the message image
+    const firstCard = player.collection[0];
+    const imgBuffer = (
+        await axios.get(firstCard.img, { responseType: "arraybuffer" })
+    ).data;
+
+    await sock.sendMessage(
+        chatId,
+        {
+            image: imgBuffer,
+            caption: collectionMsg,
+        },
+        { quoted: message },
+    );
                 }
             } catch (error) {
                 console.error("Collection error:", error);
@@ -907,7 +917,7 @@ const cardCommands = {
                     }
                     const axios = require("axios");
                     const cardMsg =
-                        `🎴 ┌──「 *CARD DETAILS* 」\n\n` +
+                        `┌──「 *CARD DETAILS* 」\n\n` +
                         `📜 *Name:* ${card.name}\n` +
                         `⭐ *Tier:* ${card.tier}\n` +
                         `🎭 *Series:* ${card.series}\n` +
