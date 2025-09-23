@@ -325,7 +325,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
 
             switch (gameState.gameType) {
                 case 'hangman':
-                    await handleHangmanGuess(gameState, answer, chatId, bot, );
+                    await handleHangmanGuess(gameState, answer, chatId, bot, sock, message);
                     break;
 
                 case 'trivia':
