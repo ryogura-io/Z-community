@@ -2,6 +2,49 @@ const Player = require("../models/Player");
 const Card = require("../models/Card");
 const CardShop = require("../models/CardShop");
 const axios = require("axios");
+const spawnManager = require("../spawnManager");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegStatic = require("ffmpeg-static");
+const fs = require("fs");
+const path = require("path");
+
+// Set FFmpeg path
+ffmpeg.setFfmpegPath(ffmpegStatic);
+
+// Helper function to convert media to MP4
+async function convertToMp4(inputBuffer, outputPath) {
+    return new Promise((resolve, reject) => {
+        const tempInputPath = path.join(
+            __dirname,
+            "..",
+            "temp_input_" + Date.now(),
+        );
+
+        // Write buffer to temporary file
+        fs.writeFileSync(tempInputPath, inputBuffer);
+
+        ffmpeg(tempInputPath)
+            .toFormat("mp4")
+            .videoCodec("libx264")
+            .audioCodec("aac")
+            .outputOptions([
+                "-movflags +faststart",
+                "-pix_fmt yuv420p",
+                "-vf scale=trunc(iw/2)*2:trunc(ih/2)*2", // Ensure even dimensions
+            ])
+            .on("end", () => {
+                fs.unlinkSync(tempInputPath); // Clean up temp input file
+                resolve();
+            })
+            .on("error", (err) => {
+                if (fs.existsSync(tempInputPath)) {
+                    fs.unlinkSync(tempInputPath); // Clean up on error
+                }
+                reject(err);
+            })
+            .save(outputPath);
+    });
+}
 
 // Helper function to generate random captcha
 function generateCaptcha() {
@@ -40,7 +83,7 @@ module.exports = {
     usage: "cardshop [index]",
     aliases: ["market"],
     adminOnly: false,
-    execute: async ({ sender, chatId, args, bot }) => {
+    execute: async ({ sender, chatId, sock, message, args }) => {
       try {
         // Clean up expired cards first
         await CardShop.cleanupExpiredCards();
@@ -53,7 +96,7 @@ module.exports = {
         if (args[0] && !isNaN(args[0])) {
           const cardIndex = parseInt(args[0]) - 1;
           if (cardIndex < 0 || cardIndex >= shopCards.length) {
-            return bot.sendMessage(chatId, "❌ Invalid card shop index!");
+            return sock.sendMessage(chatId, { text: `❌ Invalid card shop index!`}, { quoted: message });
           }
 
           const shopCard = shopCards[cardIndex];
@@ -63,15 +106,14 @@ module.exports = {
           );
 
           const cardMsg =
-            `🏪 *Card Shop - Position ${args[0]}*\n\n` +
+            `🏪 *Card Shop ${args[0]}*\n\n` +
             `📜 *Name:* ${shopCard.cardId.name}\n` +
             `⭐ *Tier:* ${shopCard.cardId.tier}\n` +
             `🎭 *Series:* ${shopCard.cardId.series}\n` +
-            `👨‍🎨 *Maker:* ${shopCard.cardId.maker}\n\n` +
             `💰 *Price:* ${shopCard.price} shards\n` +
             `👤 *Seller:* ${shopCard.sellerName}\n` +
             `⏰ *Time Left:* ${timeLeft} hours\n` +
-            `🔑 *Purchase Code:* ${shopCard.purchaseCaptcha}\n\n` +
+            `🔑 *Purchase captcha:* ${shopCard.purchaseCaptcha}\n\n` +
             `💡 Use \`!purchase ${shopCard.purchaseCaptcha}\` to buy`;
 
           const imgBuffer = (
@@ -79,15 +121,186 @@ module.exports = {
               responseType: "arraybuffer",
             })
           ).data;
-          return bot.sendImage(chatId, imgBuffer, cardMsg);
+
+          // return sock.sendMessage(chatId, {
+          //   image: imgBuffer,
+          //   caption: cardMsg
+          // }, { quoted: message })
+
+          if (
+            (shopCard.cardId.img === "6" || card.tier === "S") &&
+            (shopCard.cardId.img.endsWith(".webm") ||
+              shopCard.cardId.img.endsWith(".gif"))
+          ) {
+            try {
+              const mediaBuffer = (
+                await axios.get(shopCard.cardId.img, {
+                  responseType: "arraybuffer",
+                })
+              ).data;
+              const outputPath = path.join(
+                __dirname,
+                "..",
+                `temp_output_${Date.now()}.mp4`,
+              );
+
+              await convertToMp4(mediaBuffer, outputPath);
+              const videoBuffer = fs.readFileSync(outputPath);
+              fs.unlinkSync(outputPath); // Clean up
+
+              return sock.sendMessage(
+                chatId,
+                {
+                  video: videoBuffer,
+                  caption: cardMsg,
+                  mimetype: "video/mp4",
+                  gifPlayback: true,
+                },
+                { quoted: message },
+              );
+            } catch (conversionError) {
+              console.error(
+                "Video conversion error:",
+                conversionError,
+              );
+              // Fallback to sending as image
+              const imgBuffer = (
+                await axios.get(shopCard.cardId.img, {
+                  responseType: "arraybuffer",
+                })
+              ).data;
+              return sock.sendMessage(
+                chatId,
+                {
+                  image: imgBuffer,
+                  caption: cardMsg,
+                },
+                { quoted: message },
+              );
+            }
+          } else {
+            const imgBuffer = (
+              await axios.get(shopCard.cardId.img, {
+                responseType: "arraybuffer",
+              })
+            ).data;
+            return sock.sendMessage(
+              chatId,
+              {
+                image: imgBuffer,
+                caption: cardMsg,
+              },
+              { quoted: message },
+            );
+          }
+
+        }
+        // Show all cards in shop
+        const sharp = require("sharp");
+        
+        // Create base image (800x600) with white background
+        const cardWidth = 230;
+        const cardHeight = 300;
+        const padding = 2;
+        const startX = 2;
+        const startY = 2;
+
+        // Create white background
+        const background = await sharp({
+          create: {
+            width: 700,
+            height: 1210,
+            channels: 4,
+            background: { r: 255, g: 255, b: 255, alpha: 1 },
+          },
+        }).png();
+
+        const composite = [];
+
+        // Process each card slot (12 total)
+        for (let i = 0; i < 12; i++) {
+          const row = Math.floor(i / 3);
+          const col = i % 3;
+          const x = Math.round(
+            startX + col * (cardWidth + padding),
+          );
+          const y = Math.round(
+            startY + row * (cardHeight + padding),
+          );
+          
+          const shopCard = shopCards[cardIndex];
+          const card = await CardShop.find()
+          .populate("cardId")
+          .sort({ listedAt: 1 });
+
+          if (card) {
+            try {
+              // Download and process card image
+              const cardImgResponse = await axios.get(
+                shopCard.cardId.img,
+                {
+                  responseType: "arraybuffer",
+                  timeout: 10000,
+                },
+              );
+
+              // Resize card image to fill entire slot
+              const resizedCard = await sharp(
+                Buffer.from(cardImgResponse.data),
+              )
+                .resize(cardWidth, cardHeight, {
+                  fit: "cover",
+                })
+                .png()
+                .toBuffer();
+
+              // Add card to composite
+              composite.push({
+                input: resizedCard,
+                top: y,
+                left: x,
+              });
+            } catch (cardError) {
+              console.error(
+                `Error loading card image for ${card.name}:`,
+                cardError,
+              );
+
+              // Create gray placeholder for error
+              const errorSvg = `
+                                    <svg width="${cardWidth}" height="${cardHeight}">
+                                        <rect width="100%" height="100%" fill="#cccccc"/>
+                                    </svg>
+                                `;
+
+              const errorPlaceholder = await sharp(
+                Buffer.from(errorSvg),
+              )
+                .png()
+                .toBuffer();
+
+              composite.push({
+                input: errorPlaceholder,
+                top: y,
+                left: x,
+              });
+            }
+          } else {
+            // Empty slot - just leave it empty (white background shows through)
+          }
         }
 
-        // Show all cards in shop
+        // Composite all elements and create final image
+        const imageBuffer = await background
+          .composite(composite)
+          .png()
+          .toBuffer();
+
         const shopMsg = formatCardShopList(shopCards);
-        await bot.sendMessage(chatId, shopMsg);
+        await sock.sendMessage(chatId, { text:shopMsg}, { quoted: message });
       } catch (error) {
         console.error("Cardshop error:", error);
-        await bot.sendMessage(chatId, "❌ Error accessing card shop.");
+        await sock.sendMessage(chatId, { text: `❌ Error accessing card shop.`}, { quoted: message });
       }
     },
   },
@@ -95,13 +308,13 @@ module.exports = {
   marketcard: {
     description: "Put a card from your collection on the market (Tier 4+ only)",
     usage: "marketcard <collection_index> <price>",
-    aliases: ["listcard"],
+    aliases: ["listcard", "mc"],
     adminOnly: false,
-    execute: async ({ sender, chatId, args, bot }) => {
+    execute: async ({ sender, chatId, message, sock, args }) => {
       if (!args[0] || !args[1] || isNaN(args[0]) || isNaN(args[1])) {
-        return bot.sendMessage(
+        return sock.sendMessage(
           chatId,
-          "❌ Usage: !marketcard <collection_index> <price>",
+          { text: "❌ Usage: !marketcard <collection_index> <price>"}, { quoted: message }
         );
       }
 
@@ -111,9 +324,9 @@ module.exports = {
 
         // Check if shop is full
         if (await CardShop.isShopFull()) {
-          return bot.sendMessage(
+          return sock.sendMessage(
             chatId,
-            "❌ Card shop is full! Try again later when slots become available.",
+            { text: "❌ Card shop is full! Try again later when slots become available."}, { quoted: message }
           );
         }
 
@@ -121,18 +334,18 @@ module.exports = {
           "collection",
         );
         if (!player) {
-          return bot.sendMessage(chatId, "❌ Please register first!");
+          return sock.sendMessage(chatId, { text: `❌ Please register first!`}, { quoted: message });
         }
 
         const cardIndex = parseInt(args[0]) - 1;
         const price = parseInt(args[1]);
 
         if (cardIndex < 0 || cardIndex >= player.collection.length) {
-          return bot.sendMessage(chatId, "❌ Invalid collection index!");
+          return sock.sendMessage(chatId, { text: `❌ Invalid collection index!`}, { quoted: message });
         }
 
         if (price < 1) {
-          return bot.sendMessage(chatId, "❌ Price must be at least 1 shard!");
+          return sock.sendMessage(chatId, { text: `❌ Price must be at least 1 shard!`}, { quoted: message });
         }
 
         const card = player.collection[cardIndex];
@@ -140,9 +353,9 @@ module.exports = {
         // Check if card is tier 4 or above
         const tierNum = parseInt(card.tier);
         if (isNaN(tierNum) || tierNum < 4) {
-          return bot.sendMessage(
+          return sock.sendMessage(
             chatId,
-            "❌ Only cards of Tier 4 and above can be sold!",
+            { text: "❌ Only cards of Tier 4 and above can be sold!"}, { quoted: message },
           );
         }
 
@@ -167,16 +380,24 @@ module.exports = {
 
         const successMsg =
           `✅ *Card Listed Successfully!*\n\n` +
-          `🎴 **${card.name}** (Tier ${card.tier})\n` +
+          `🎴 *${card.name}* (Tier ${card.tier})\n` +
           `💰 Price: ${price} shards\n` +
           `🔑 Purchase Code: ${captcha}\n` +
           `⏰ Expires in 6 hours\n\n` +
           `💡 Buyers can use \`!purchase ${captcha}\` to buy`;
 
-        await bot.sendMessage(chatId, successMsg);
+        const imgBuffer = (
+          await axios.get(card.img, {
+            responseType: "arraybuffer",
+          })
+        ).data;
+        await sock.sendMessage(chatId, {
+                            image: imgBuffer,
+                            caption: successMsg
+                        }, { quoted: message })
       } catch (error) {
         console.error("Marketcard error:", error);
-        await bot.sendMessage(chatId, "❌ Error listing card for sale.");
+        await sock.sendMessage(chatId, { text: `❌ Error listing card for sale.`}, { quoted: message });
       }
     },
   },
@@ -186,9 +407,9 @@ module.exports = {
     usage: "purchase <captcha_code>",
     aliases: ["getcard"],
     adminOnly: false,
-    execute: async ({ sender, chatId, args, bot }) => {
+    execute: async ({ sender, chatId, args, bot, sock, message }) => {
       if (!args[0]) {
-        return bot.sendMessage(chatId, "❌ Usage: !purchase <captcha_code>");
+        return sock.sendMessage(chatId, { text: `❌ Usage: !purchase <captcha_code>`}, { quoted: message });
       }
 
       try {
@@ -261,12 +482,12 @@ module.exports = {
           // Transaction successful - send success messages
           const successMsg =
             `✅ *Purchase Successful!*\n\n` +
-            `🎴 **${shopCard.cardId.name}** (Tier ${shopCard.cardId.tier})\n` +
+            `🎴 *${shopCard.cardId.name}* (Tier ${shopCard.cardId.tier})\n` +
             `💰 Paid: ${shopCard.price} shards\n` +
             `👤 Bought from: ${shopCard.sellerName}\n\n` +
             `🎉 Card added to your collection!`;
 
-          await bot.sendMessage(chatId, successMsg);
+          await sock.sendMessage(chatId, { text: successMsg}, { quoted: message });
 
           // Notify seller if online (optional)
           if (seller) {
@@ -277,7 +498,7 @@ module.exports = {
               `💎 Your balance: ${seller.shards} shards`;
 
             try {
-              await bot.sendMessage(shopCard.sellerId, sellerMsg);
+              await sock.sendMessage(shopCard.sellerId, { text: sellerMsg}, { quoted: message });
             } catch (error) {
               // Seller might have bot blocked, ignore error
               console.log("Could not notify seller:", error.message);
@@ -285,16 +506,419 @@ module.exports = {
           }
         } catch (transactionError) {
           console.error("Purchase transaction error:", transactionError);
-          await bot.sendMessage(
+          await sock.sendMessage(
             chatId,
-            `❌ ${transactionError.message || "Error processing purchase."}`,
+            { text: `❌ ${transactionError.message || "Error processing purchase."}`}, { quoted: message }
           );
         } finally {
           await session.endSession();
         }
       } catch (error) {
         console.error("Purchase error:", error);
-        await bot.sendMessage(chatId, "❌ Error processing purchase.");
+        await sock.sendMessage(chatId, { text: `❌ Error processing purchase.`}, { quoted: message });
+      }
+    },
+  },
+
+  sellcard: {
+    description: "Put a card from your collection on sale in this group",
+    usage: "sellcard <collectionindex> <price>",
+    aliases: ["sc"],
+    adminOnly: false,
+    execute: async ({ sender, chatId, message, args, sock, isGroup }) => {
+      try {
+        if (!isGroup) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Card selling is only available in groups!" }, { quoted: message }
+          );
+        }
+
+        if (args.length !== 2) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Usage: !sellcard <collectionindex> <price>\nExample: !sellcard 5 100" }, { quoted: message }
+          );
+        }
+
+        const collectionIndex = parseInt(args[0]) - 1;
+        const price = parseInt(args[1]);
+
+        if (isNaN(collectionIndex) || collectionIndex < 0) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Invalid collection index! Use a positive number." }, { quoted: message }
+          );
+        }
+
+        if (isNaN(price) || price < 1) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Invalid price! Use a positive number." }, { quoted: message }
+          );
+        }
+
+        const Player = require("../models/Player");
+        const CardSale = require("../models/CardSale");
+
+        const player = await Player.findOne({
+          userId: sender,
+        }).populate("collection");
+        if (!player) {
+          return sock.sendMessage(chatId, { text: `❌ Please register first!` }, { quoted: message });
+        }
+
+        if (collectionIndex >= player.collection.length) {
+          return sock.sendMessage(
+            chatId,
+            { text: `❌ You only have ${player.collection.length} cards in your collection!` }, { quoted: message }
+          );
+        }
+
+        const cardToSell = player.collection[collectionIndex];
+        if (!cardToSell) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ No card found at that index!" }, { quoted: message }
+          );
+        }
+
+        // Cleanup any expired sales first
+        await CardSale.cleanupExpiredSales(chatId);
+
+        // Check if seller already has an active sale in this group
+        const existingSale = await CardSale.findOne({
+          sellerId: sender,
+          groupId: chatId,
+          status: "active",
+        });
+
+        if (existingSale) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ You already have an active sale in this group! Wait for it to expire or be purchased." }, { quoted: message }
+          );
+        }
+
+        // Remove card from seller's collection
+        player.collection.splice(collectionIndex, 1);
+        await player.save();
+
+        // Generate sale captcha and create sale record
+        const saleCaptcha = CardSale.generateCaptcha();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        const cardSale = new CardSale({
+          cardId: cardToSell._id,
+          sellerId: sender,
+          sellerName: player.name,
+          groupId: chatId,
+          price: price,
+          saleCaptcha: saleCaptcha,
+          expiresAt: expiresAt,
+        });
+
+        await cardSale.save();
+
+        // Send card image with sale details (reliable approach)
+        try {
+          // Send the original card image with sale information
+          const cardImgResponse = await axios.get(cardToSell.img, {
+            responseType: "arraybuffer",
+            timeout: 5000,
+          });
+
+          const saleMsg =
+            `🏪 *CARD FOR SALE* 🏪\n\n` +
+            `🎴 *Name:* ${cardToSell.name}\n` +
+            `⭐ *Tier:* ${cardToSell.tier}\n` +
+            `💰 *Price: ${price} Shards*\n` +
+            `🔑 *Buy captcha: ${saleCaptcha}*\n\n` +
+            `👤 Seller: ${player.name}\n` +
+            `💡 Use *!buycard ${saleCaptcha}* to purchase`;
+
+
+          await sock.sendMessage(chatId, {
+            image: cardImgResponse.data,
+            caption: saleMsg
+          }, { quoted: message })
+          // Set timeout to auto-return card if not sold
+          setTimeout(
+            async () => {
+              try {
+                const sale = await CardSale.findById(
+                  cardSale._id,
+                );
+                if (sale && sale.status === "active") {
+                  const seller = await Player.findOne({
+                    userId: sale.sellerId,
+                  });
+                  if (seller) {
+                    seller.collection.push(sale.cardId);
+                    await seller.save();
+                    sale.status = "expired";
+                    await sale.save();
+
+                    await sock.sendMessage(
+                      chatId,
+                      { text: `⏰ Sale expired! Card "${cardToSell.name}" has been returned to ${player.name}'s collection.` }, { quoted: message }
+                    );
+                  }
+                }
+              } catch (timeoutError) {
+                console.error(
+                  "Error in sale timeout:",
+                  timeoutError,
+                );
+              }
+            },
+            10 * 60 * 1000,
+          ); // 10 minutes
+        } catch (imageError) {
+          console.error("Error creating sale image:", imageError);
+
+          // Fallback to text message
+          const saleMsg =
+            `🏪 *CARD FOR SALE* 🏪\n\n` +
+            `🎴 *Name:* ${cardToSell.name}\n` +
+            `⭐ *Tier:* ${cardToSell.tier}\n` +
+            `🎭 *Series:* ${cardToSell.series}\n` +
+            `👨‍🎨 *Maker:* ${cardToSell.maker}\n\n` +
+            `💰 *Price: ${price} Shards*\n` +
+            `🔑 *Buy Captcha: ${saleCaptcha}*\n\n` +
+            `👤 Seller: ${player.name}\n` +
+            `⏰ Expires in 10 minutes\n` +
+            `💡 Use \`*!buycard ${saleCaptcha}*\` to purchase`;
+
+          await sock.sendMessage(chatId, { text: saleMsg }, { quoted: message });
+        }
+      } catch (error) {
+        console.error("Sellcard error:", error);
+        await sock.sendMessage(chatId, { text: `❌ Error creating card sale.` }, { quoted: message });
+      }
+    },
+  },
+
+  buycard: {
+    description: "Buy a card that's for sale in this group",
+    usage: "buycard <salecaptcha>",
+    aliases: ["bc"],
+    adminOnly: false,
+    execute: async ({ sender, chatId, message, sock, args, isGroup }) => {
+      try {
+        if (!isGroup) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Card buying is only available in groups!" }, { quoted: message }
+          );
+        }
+
+        if (args.length !== 1) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Usage: !buycard <salecaptcha>\nExample: !buycard ABC1" }, { quoted: message }
+          );
+        }
+
+        const saleCaptcha = args[0].toUpperCase();
+
+        const Player = require("../models/Player");
+        const CardSale = require("../models/CardSale");
+
+        const buyer = await Player.findOne({ userId: sender });
+        if (!buyer) {
+          return sock.sendMessage(chatId, { text: `❌ Please register first!` }, { quoted: message });
+        }
+
+        // Cleanup expired sales first
+        await CardSale.cleanupExpiredSales(chatId);
+
+        // Find the active sale in this group with this captcha
+        const sale = await CardSale.findOne({
+          groupId: chatId,
+          saleCaptcha: saleCaptcha,
+          status: "active",
+        }).populate("cardId");
+
+        if (!sale) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ No active sale found with that code in this group!" }, { quoted: message }
+          );
+        }
+
+        // Check if sale has expired
+        if (sale.hasExpired()) {
+          // Cleanup this expired sale
+          await CardSale.cleanupExpiredSales(chatId);
+          return sock.sendMessage(chatId, { text: `❌ That sale has expired!` }, { quoted: message });
+        }
+
+        // Prevent self-purchase
+        if (sale.sellerId === sender) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ You cannot buy your own card!" }, { quoted: message }
+          );
+        }
+
+        // Check if buyer has enough shards
+        if (buyer.shards < sale.price) {
+          return sock.sendMessage(
+            chatId,
+            { text: `❌ You need ${sale.price} shards but only have ${buyer.shards}!` }, { quoted: message }
+          );
+        }
+
+        // Get seller
+        const seller = await Player.findOne({ userId: sale.sellerId });
+        if (!seller) {
+          return sock.sendMessage(chatId, { text: `❌ Seller not found!` }, { quoted: message });
+        }
+
+        // Perform the transaction atomically
+        const mongoose = require("mongoose");
+        const session = await mongoose.startSession();
+
+        try {
+          await session.withTransaction(async () => {
+            // Deduct shards from buyer
+            buyer.shards -= sale.price;
+
+            // Add shards to seller
+            seller.shards += sale.price;
+
+            // Add card to buyer's collection
+            buyer.collection.push(sale.cardId._id);
+
+            // Mark sale as sold
+            sale.status = "sold";
+            sale.buyerId = sender;
+            sale.buyerName = buyer.name;
+            sale.soldAt = new Date();
+
+            // Save all changes
+            await buyer.save({ session });
+            await seller.save({ session });
+            await sale.save({ session });
+          });
+
+          const purchaseMsg =
+            `✅ *PURCHASE SUCCESSFUL!* ✅\n\n` +
+            `🎴 *Name:* ${sale.cardId.name} (Tier ${sale.cardId.tier})\n` +
+            `💰 *Price*: ${sale.price} shards\n\n` +
+            `👤 *Buyer*: ${buyer.name}\n` +
+            `👤 *Seller*: ${seller.name}\n\n` +
+            `💰 ${buyer.name}'s remaining shards: ${buyer.shards}\n` +
+            `💰 ${seller.name}'s new balance: ${seller.shards}`;
+
+          await sock.sendMessage(chatId, { text: purchaseMsg }, { quoted: message });
+        } catch (transactionError) {
+          await session.abortTransaction();
+          console.error("Transaction error:", transactionError);
+          await sock.sendMessage(
+            chatId,
+            { text: "❌ Error processing purchase. Please try again." }, { quoted: message }
+          );
+        } finally {
+          await session.endSession();
+        }
+      } catch (error) {
+        console.error("Buycard error:", error);
+        await sock.sendMessage(chatId, { text: `❌ Error purchasing card.` }, { quoted: message });
+      }
+    },
+  },
+
+  cancelsale: {
+    description: "Cancel your current card sale in this group",
+    usage: "cancelsale",
+    aliases: ["cs"],
+    adminOnly: false,
+    execute: async ({ sender, chatId, message, sock, isGroup }) => {
+      try {
+        if (!isGroup) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Card sales are only available in groups!" }, { quoted: message }
+          );
+        }
+
+        const Player = require("../models/Player");
+        const CardSale = require("../models/CardSale");
+
+        const player = await Player.findOne({ userId: sender });
+        if (!player) {
+          return sock.sendMessage(chatId, { text: `❌ Please register first!` }, { quoted: message });
+        }
+
+        // Cleanup any expired sales first
+        await CardSale.cleanupExpiredSales(chatId);
+
+        // Find the seller's active sale in this group
+        const activeSale = await CardSale.findOne({
+          sellerId: sender,
+          groupId: chatId,
+          status: "active",
+        }).populate("cardId");
+
+        if (!activeSale) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ You don't have any active sales in this group!" }, { quoted: message }
+          );
+        }
+
+        // Check if sale has expired (safety check)
+        if (activeSale.hasExpired()) {
+          await CardSale.cleanupExpiredSales(chatId);
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Your sale has already expired!" }, { quoted: message }
+          );
+        }
+
+        // Perform the cancellation atomically
+        const mongoose = require("mongoose");
+        const session = await mongoose.startSession();
+
+        try {
+          await session.withTransaction(async () => {
+            // Return card to seller's collection
+            player.collection.push(activeSale.cardId._id);
+
+            // Mark sale as expired/cancelled
+            activeSale.status = "expired";
+
+            // Save changes
+            await player.save({ session });
+            await activeSale.save({ session });
+          });
+
+          const cancelMsg =
+            `❌ *SALE CANCELLED* ❌\n\n` +
+            `🎴 *${activeSale.cardId.name}* (Tier ${activeSale.cardId.tier})\n` +
+            `💰 Was priced at: ${activeSale.price} shards\n\n` +
+            `✅ Card has been returned to your collection.\n` +
+            `👤 Cancelled by: ${player.name}`;
+
+          await sock.sendMessage(chatId, { text: cancelMsg }, { quoted: message });
+        } catch (transactionError) {
+          await session.abortTransaction();
+          console.error(
+            "Transaction error during cancellation:",
+            transactionError,
+          );
+          await sock.sendMessage(
+            chatId,
+            { text: "❌ Error cancelling sale. Please try again." }, { quoted: message }
+          );
+        } finally {
+          await session.endSession();
+        }
+      } catch (error) {
+        console.error("Cancelsale error:", error);
+        await sock.sendMessage(chatId, { text: `❌ Error cancelling card sale.` }, { quoted: message });
       }
     },
   },
