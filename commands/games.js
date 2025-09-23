@@ -308,7 +308,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
         usage: 'a <answer>',
         adminOnly: false,
         execute: async (context) => {
-            const { args, chatId, bot } = context;
+            const { args, chatId, bot, sock, message } = context;
 
             if (args.length === 0) {
                 await bot.sendMessage(chatId, '❌ Please provide an answer.\nUsage: !a <your answer>');
@@ -325,7 +325,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
 
             switch (gameState.gameType) {
                 case 'hangman':
-                    await handleHangmanGuess(gameState, answer, chatId, bot);
+                    await handleHangmanGuess(gameState, answer, chatId, bot, );
                     break;
 
                 case 'trivia':
@@ -338,15 +338,15 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
 
                 case 'poke': {
                     if (answer === gameState.answer) {
-                        await bot.sendMessage(chatId, `✅ Correct! It was *${gameState.answer}*!`);
+                        await sock.sendMessage(chatId, { text:`✅ Correct! It was *${gameState.answer}*!`}, { quoted: message });
                         gameStates.delete(chatId);
                     } else {
                         gameState.attempts++;
                         if (gameState.attempts >= gameState.maxAttempts) {
-                            await bot.sendMessage(chatId, `❌ Out of chances! The Pokémon was *${gameState.answer}*`);
+                            await sock.sendMessage(chatId, { text:`❌ Out of chances! The Pokémon was *${gameState.answer}*`}, { quoted: message });
                             gameStates.delete(chatId);
                         } else {
-                            await bot.sendMessage(chatId, `❌ Wrong! You have ${gameState.maxAttempts - gameState.attempts} tries left.`);
+                            await sock.sendMessage(chatId, { text: `❌ Wrong! You have ${gameState.maxAttempts - gameState.attempts} tries left.`}, { quoted: message });
                         }
                     }
                     break;
@@ -406,9 +406,20 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
     }
 };
 
-async function handleHangmanGuess(gameState, guess, chatId, bot) {
+async function handleHangmanGuess(
+    gameState,
+    guess,
+    chatId,
+    bot,
+    message,
+    sock,
+) {
     if (guess.length !== 1) {
-        await bot.sendMessage(chatId, '❌ Please guess only one letter at a time.');
+        await sock.sendMessage(
+            chatId,
+            { text: "❌ Please guess only one letter at a time." },
+            { quoted: message },
+        );
         return;
     }
 
@@ -422,28 +433,40 @@ async function handleHangmanGuess(gameState, guess, chatId, bot) {
             }
         }
 
-        if (!gameState.guessed.includes('_')) {
+        if (!gameState.guessed.includes("_")) {
             gameStates.delete(chatId);
-            await bot.sendMessage(chatId, `🎉 *You won!*\n\nThe word was: *${gameState.word}*`);
+            await sock.sendMessage(
+                chatId,
+                { text: `🎉 *You won!*\n\nThe word was: *${gameState.word}*` },
+                { quoted: message },
+            );
             return;
         }
 
-        const gameText = `✅ Correct!\n\nWord: ${gameState.guessed.join(' ')}\n` +
+        const gameText =
+            `✅ Correct!\n\nWord: ${gameState.guessed.join(" ")}\n` +
             `Wrong guesses: ${gameState.wrongGuesses.length}/${gameState.maxWrong}`;
-        await bot.sendMessage(chatId, gameText);
+        await sock.sendMessage(chatId, { text: gameText }, { quoted: message });
     } else {
         // Wrong guess
         gameState.wrongGuesses.push(letter);
 
         if (gameState.wrongGuesses.length >= gameState.maxWrong) {
             gameStates.delete(chatId);
-            await bot.sendMessage(chatId, `💀 *Game Over!*\n\nThe word was: *${gameState.word}*`);
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: `💀 *Game Over!*\n\nThe word was: *${gameState.word}*`,
+                },
+                { quoted: message },
+            );
             return;
         }
 
-        const gameText = `❌ Wrong letter!\n\nWord: ${gameState.guessed.join(' ')}\n` +
-            `Wrong guesses: ${gameState.wrongGuesses.join(', ')} (${gameState.wrongGuesses.length}/${gameState.maxWrong})`;
-        await bot.sendMessage(chatId, gameText);
+        const gameText =
+            `❌ Wrong letter!\n\nWord: ${gameState.guessed.join(" ")}\n` +
+            `Wrong guesses: ${gameState.wrongGuesses.join(", ")} (${gameState.wrongGuesses.length}/${gameState.maxWrong})`;
+        await sock.sendMessage(chatId, { text: gameText }, { quoted: message });
     }
 }
 
