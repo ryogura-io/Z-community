@@ -37,6 +37,12 @@ const categoryMap = {
             "collector",
             "seriessearch",
             "searchcard",
+            "cardshop", 
+            "marketcard", 
+            "purchase", 
+            "sellcard", 
+            "buycard",
+            "cancelsale",
         ],
     },
     core: {
