@@ -8,7 +8,7 @@ const adminCommands = {
         aliases: ["aadmin", "addsudo"],
         adminOnly: true,
         execute: async (context) => {
-            const { args, chatId, bot, sock, sender, message, isGroup } = context;
+            const { args, chatId, sock, sender, message, isGroup } = context;
             const isOwner = await permissions.isBotOwner(sender);
             if (!isOwner) {
                 await sock.sendMessage(chatId, { text: '❌ You are not authorized to use this command.' }, { quoted: message });
@@ -63,7 +63,7 @@ const adminCommands = {
         aliases: ["radmin", "delsudo"],
         adminOnly: true,
         execute: async (context) => {
-            const { args, chatId, bot, sock, sender, message, isGroup } = context;
+            const { args, chatId, sock, sender, message, isGroup } = context;
 
             const isOwner = await permissions.isBotOwner(sender);
             if (!isOwner) {
@@ -119,7 +119,7 @@ const adminCommands = {
         aliases: ["setting"],
         adminOnly: true,
         execute: async (context) => {
-            const { chatId, bot } = context;
+            const { chatId, sock, message } = context;
             const settings = config.get('settings');
             const admins = config.get('admins');
             
@@ -142,7 +142,7 @@ const adminCommands = {
         aliases: ["set"],
         adminOnly: true,
         execute: async (context) => {
-            const { args, chatId, bot, sender } = context;
+            const { args, chatId, sock, message, sender } = context;
 
             const isOwner = await permissions.isBotOwner(sender)
             if (!isOwner) {
@@ -189,7 +189,7 @@ const adminCommands = {
         usage: 'mode <private/public>',
         adminOnly: true,
         execute: async (context) => {
-            const { args, chatId, bot, sender } = context;
+            const { args, chatId, bot, sender, sock, message } = context;
 
             // ✅ check if sender is allowed
             const allowed = await permissions.checkPermission(sender, chatId, true, bot);
@@ -236,7 +236,7 @@ const adminCommands = {
         usage: 'setpp (reply to image)',
         adminOnly: true,
         execute: async (context) => {
-            const { chatId, bot, message, sender, sock } = context;
+            const { chatId, message, sender, sock } = context;
 
             const allowed = await permissions.checkPermission(sender, chatId, true, sock);
             if (!allowed) {
