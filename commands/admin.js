@@ -1,5 +1,6 @@
 const config = require('../config');
 const permissions = require('../utils/permissions');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 
 const adminCommands = {
     addadmin: {
