@@ -8,7 +8,7 @@ const moderatorCommands = {
         description: "Ban a user from using the bot",
         usage: "ban (reply to user)",
         adminOnly: true,
-        execute: async ({ sender, chatId, message, bot, sock }) => {
+        execute: async ({ sender, chatId, message, sock }) => {
             let targetUser;
 
             if (
@@ -151,7 +151,7 @@ const moderatorCommands = {
         description: "Disable the bot in current group",
         usage: "disable",
         adminOnly: true,
-        execute: async ({ chatId, bot, sock, message }) => {
+        execute: async ({ chatId, sock, message }) => {
             try {
                 let group = await Group.findOne({ groupId: chatId });
 
@@ -183,7 +183,7 @@ const moderatorCommands = {
         description: "Enable/disable card spawning in group",
         usage: "spawn <yes/no>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot, sock, message }) => {
+        execute: async ({ chatId, args, bot, message }) => {
             if (!args[0]) {
                 return sock.sendMessage(
                     chatId,
@@ -332,7 +332,7 @@ const moderatorCommands = {
         description: "Open slot for familia members",
         usage: "startslot <familia_name>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot, sock, message }) => {
+        execute: async ({ chatId, args, sock, message }) => {
             if (!args[0]) {
                 return sock.sendMessage(
                     chatId,
@@ -392,7 +392,7 @@ const moderatorCommands = {
         description: "Close slot for familia",
         usage: "endslot <familia_name>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot, sock, message }) => {
+        execute: async ({ chatId, args, sock, message }) => {
             if (!args[0]) {
                 return sock.sendMessage(
                     chatId,
@@ -582,7 +582,7 @@ const moderatorCommands = {
                     infoMsg += `${index + 1}. *${player.name}* - ${totalCopies} copies\n`;
                 });
 
-                await sock.sendMessage(chatId, infoMsg);
+                await sock.sendMessage(chatId, { text: infoMsg}, { quoted: message });
             } catch (error) {
                 console.error("CardInfo error:", error);
                 await sock.sendMessage(
