@@ -126,7 +126,19 @@ const cardCommands = {
                 } else {
                     player.collection.push(activeSpawn.card._id);
                 }
-
+                // 🎲 Probability-based shard reward
+const rewardChance = 0.10; // 25% chance to get 2000 shards
+let rewardShards = 0;
+if (Math.random() <= rewardChance) {
+    rewardShards = 2000;
+    player.shards += rewardShards;
+    const bonusMsg = `💰 Congratulations, you successfully won 2000 bonus shards`
+    await sock.sendMessage(
+                    chatId,
+                    { text: bonusMsg },
+                    { quoted: message },
+                );
+}
                 player.exp += 50;
                 await player.save();
 
