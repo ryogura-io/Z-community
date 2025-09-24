@@ -399,9 +399,9 @@ const economyCommands = {
                     return '🍒'; // fallback
                 }
                 
-                const reel1 = getWeightedSymbol();
-                const reel2 = getWeightedSymbol();
-                const reel3 = getWeightedSymbol();
+                let reel1 = getWeightedSymbol();
+                let reel2 = getWeightedSymbol();
+                let reel3 = getWeightedSymbol();
                 if (Math.random() < 0.3) { // 10% of the time
     const common = ['🍒','🍋','🍊'];
     const symbol = common[Math.floor(Math.random() * common.length)];
