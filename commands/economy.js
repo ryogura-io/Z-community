@@ -402,7 +402,11 @@ const economyCommands = {
                 const reel1 = getWeightedSymbol();
                 const reel2 = getWeightedSymbol();
                 const reel3 = getWeightedSymbol();
-                
+                if (Math.random() < 0.3) { // 10% of the time
+    const common = ['🍒','🍋','🍊'];
+    const symbol = common[Math.floor(Math.random() * common.length)];
+    reel1 = reel2 = reel3 = symbol;
+}
                 let multiplier = 0;
                 if (reel1 === reel2 && reel2 === reel3) {
                     // Triple match
