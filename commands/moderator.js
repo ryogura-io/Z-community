@@ -183,7 +183,7 @@ const moderatorCommands = {
         description: "Enable/disable card spawning in group",
         usage: "spawn <yes/no>",
         adminOnly: true,
-        execute: async ({ chatId, args, bot, message }) => {
+        execute: async ({ chatId, args, bot, message, sock }) => {
             if (!args[0]) {
                 return sock.sendMessage(
                     chatId,
