@@ -146,7 +146,10 @@ const familiaCommands = {
 
                 await sock.sendMessage(
                     chatId,
-                    { text: `✅ Added ${args[0]} to *${familia.name}*!` },
+                    {
+                        text: `✅ Added @${mentionedUser.split("@")[0]} to *${familia.name}*!`,
+                        mentions: [mentionedUser],
+                    },
                     { quoted: message },
                 );
             } catch (error) {
@@ -235,7 +238,10 @@ const familiaCommands = {
 
                 await sock.sendMessage(
                     chatId,
-                    { text: `❌ Removed ${args[0]} from *${familia.name}*!` },
+                    {
+                        text: `❌ Removed @${mentionedUser.split("@")[0]} from *${familia.name}*!`,
+                        mentions: [mentionedUser],
+                    },
                     { quoted: message },
                 );
             } catch (error) {
@@ -402,18 +408,23 @@ const familiaCommands = {
     },
 
     joinfamilia: {
-        description: "Join a familia by ID",
-        usage: "joinfamilia <familia_id>",
+        description: "Join a familia by name",
+        usage: "joinfamilia <familia_name>",
         aliases: ["jfam"],
         adminOnly: false,
-        execute: async ({ sender, chatId, args, bot, sock, message }) => {
+        execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
                 return sock.sendMessage(
                     chatId,
-                    { text: "❌ Usage: !joinfamilia <familia_id>" },
+                    { text: "❌ Usage: !joinfamilia <familia_name>" },
                     { quoted: message },
                 );
             }
+            // Join by familia name (case-insensitive, supports spaces)
+            const familiaName = args.join(" ");
+            const familia = await Familia.findOne({
+                name: new RegExp(`^${familiaName}$`, "i"),
+            });
 
             try {
                 const player = await Player.findOne({ userId: sender });
@@ -421,6 +432,14 @@ const familiaCommands = {
                     return sock.sendMessage(
                         chatId,
                         { text: "❌ Please register first!" },
+                        { quoted: message },
+                    );
+                }
+
+                if (familia.members.includes(sender)) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "❌ You're already a member of this familia!" },
                         { quoted: message },
                     );
                 }
@@ -433,11 +452,12 @@ const familiaCommands = {
                     );
                 }
 
-                const familia = await Familia.findById(args[0]);
                 if (!familia) {
                     return sock.sendMessage(
                         chatId,
-                        { text: "❌ Invalid familia ID!" },
+                        {
+                            text: `❌ No familia found with name "${familiaName}"!`,
+                        },
                         { quoted: message },
                     );
                 }
