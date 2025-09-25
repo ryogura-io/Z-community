@@ -756,7 +756,14 @@ async function handleHangmanGuess(
     }
 }
 
-async function handleTriviaAnswer(gameState, answer, chatId, bot, sender) {
+async function handleTriviaAnswer(
+    gameState,
+    answer,
+    sock,
+    chatId,
+    bot,
+    sender,
+) {
     let userAnswer = answer;
 
     // If user typed a number (e.g. "2"), map it to option
