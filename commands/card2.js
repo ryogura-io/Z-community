@@ -375,6 +375,43 @@ module.exports = {
         await shopCard.save();
         await player.save();
 
+        // After await shopCard.save(); and await player.save();
+
+        setTimeout(
+          async () => {
+            try {
+              const expiredCard = await CardShop.findById(
+                shopCard._id,
+              ).populate("cardId");
+              if (expiredCard && expiredCard.expiresAt <= new Date()) {
+                // Return card to seller
+                const seller = await Player.findOne({
+                  userId: expiredCard.sellerId,
+                });
+                if (seller) {
+                  seller.collection.push(expiredCard.cardId._id);
+                  await seller.save();
+                }
+
+                // Remove expired listing
+                await CardShop.deleteOne({ _id: expiredCard._id });
+
+                // Optional: notify seller
+                try {
+                  await sock.sendMessage(expiredCard.sellerId, {
+                    text: `⏰ Your listing for "${expiredCard.cardId.name}" expired. The card has been returned to your collection.`,
+                  });
+                } catch (notifyErr) {
+                  console.log("Seller notification failed:", notifyErr.message);
+                }
+              }
+            } catch (err) {
+              console.error("Error auto-returning expired shop card:", err);
+            }
+          },
+          6 * 60 * 60 * 1000,
+        ); // 6 hours
+
         const successMsg =
           `✅ *Card Listed Successfully!*\n\n` +
           `🎴 *${card.name}* (Tier ${card.tier})\n` +
