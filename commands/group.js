@@ -244,7 +244,7 @@ const groupCommands = {
         usage: 'link',
         adminOnly: false, // we’ll manually check admin instead
         execute: async (context) => {
-            const { chatId, isGroup, bot, sock, sender } = context;
+            const { chatId, isGroup, bot, sock, sender, message } = context;
 
             if (!isGroup) {
                 await sock.sendMessage(chatId, { text: '❌ This command can only be used in groups.' }, { quoted: message });
@@ -274,7 +274,7 @@ const groupCommands = {
         usage: 'close',
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, isGroup, bot, sock, sender } = context;
+            const { chatId, isGroup, bot, sock, sender, message } = context;
             
             if (!isGroup) {
                 await sock.sendMessage(chatId, { text: '❌ This command can only be used in groups.' }, { quoted: message });
@@ -301,7 +301,7 @@ const groupCommands = {
         usage: 'open',
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, isGroup, bot, sock, sender } = context;
+            const { chatId, isGroup, bot, sock, sender, message } = context;
             
             if (!isGroup) {
                 await sock.sendMessage(chatId, { text: '❌ This command can only be used in groups.' }, { quoted: message });
@@ -426,7 +426,7 @@ const groupCommands = {
         usage: 'admins',
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, isGroup, bot, sock } = context;
+            const { chatId, isGroup, bot, sock, message } = context;
             
             if (!isGroup) {
                 await sock.sendMessage(chatId, { text: '❌ This command can only be used in groups.' }, { quoted: message });
@@ -454,7 +454,7 @@ const groupCommands = {
                 await sock.sendMessage(chatId, {
                     text: adminText,
                     mentions: mentions
-                });
+                }, { quoted: message });
             } catch (error) {
                 await sock.sendMessage(chatId, { text: '❌ Error getting group admins.' }, { quoted: message });
             }
