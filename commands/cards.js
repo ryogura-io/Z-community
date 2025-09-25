@@ -127,18 +127,18 @@ const cardCommands = {
                     player.collection.push(activeSpawn.card._id);
                 }
                 // 🎲 Probability-based shard reward
-const rewardChance = 0.10; // 25% chance to get 2000 shards
-let rewardShards = 0;
-if (Math.random() <= rewardChance) {
-    rewardShards = 2000;
-    player.shards += rewardShards;
-    const bonusMsg = `💰 Congratulations, you successfully won 2000 bonus shards`
-    await sock.sendMessage(
-                    chatId,
-                    { text: bonusMsg },
-                    { quoted: message },
-                );
-}
+                const rewardChance = 0.1; // 25% chance to get 2000 shards
+                let rewardShards = 0;
+                if (Math.random() <= rewardChance) {
+                    rewardShards = 2000;
+                    player.shards += rewardShards;
+                    const bonusMsg = `💰 Congratulations, you successfully won 2000 bonus shards`;
+                    await sock.sendMessage(
+                        chatId,
+                        { text: bonusMsg },
+                        { quoted: message },
+                    );
+                }
                 player.exp += 50;
                 await player.save();
 
@@ -283,25 +283,27 @@ if (Math.random() <= rewardChance) {
                     }
 
                     // Generate collection text
-    let collectionMsg = `🎴 *${player.name}'s Collection (${totalCards} cards)*\n\n`;
-    player.collection.forEach((card, index) => {
-        collectionMsg += `*${index + 1}. ${card.name}* [${card.tier}]\n    Series: ${card.series}\n`;
-    });
+                    let collectionMsg = `🎴 *${player.name}'s Collection (${totalCards} cards)*\n\n`;
+                    player.collection.forEach((card, index) => {
+                        collectionMsg += `*${index + 1}. ${card.name}* [${card.tier}]\n    Series: ${card.series}\n`;
+                    });
 
-    // Use the first card's image as the message image
-    const firstCard = player.collection[0];
-    const imgBuffer = (
-        await axios.get(firstCard.img, { responseType: "arraybuffer" })
-    ).data;
+                    // Use the first card's image as the message image
+                    const firstCard = player.collection[0];
+                    const imgBuffer = (
+                        await axios.get(firstCard.img, {
+                            responseType: "arraybuffer",
+                        })
+                    ).data;
 
-    await sock.sendMessage(
-        chatId,
-        {
-            image: imgBuffer,
-            caption: collectionMsg,
-        },
-        { quoted: message },
-    );
+                    await sock.sendMessage(
+                        chatId,
+                        {
+                            image: imgBuffer,
+                            caption: collectionMsg,
+                        },
+                        { quoted: message },
+                    );
                 }
             } catch (error) {
                 console.error("Collection error:", error);
@@ -1115,11 +1117,13 @@ if (Math.random() <= rewardChance) {
                     for (let i = 0; i < 12; i++) {
                         const card = player.deck[i];
                         if (card) {
-                            deckMsg += `🎴 *${i + 1}.* ${card.name} — Tier ${card.tier}\n`;
+                            deckMsg +=
+                                `🎴 *${i + 1}.* *${card.name}* — Tier ${card.tier}` +
+                                `\n    Series: ${card.series}\n\n`;
                         }
                     }
 
-                    deckMsg += `\n💡 Use !deck <number> to see individual cards`;
+                    deckMsg += `\n💡 Use \`!deck <number>\` to see individual cards`;
 
                     await sock.sendMessage(
                         chatId,
