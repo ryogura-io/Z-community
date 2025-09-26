@@ -1119,7 +1119,7 @@ const cardCommands = {
                         if (card) {
                             deckMsg +=
                                 `🎴 *${i + 1}.* *${card.name}* — Tier ${card.tier}` +
-                                `\n    Series: ${card.series}\n\n`;
+                                `\n        Series: ${card.series}\n\n`;
                         }
                     }
 
