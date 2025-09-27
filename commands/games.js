@@ -32,9 +32,8 @@ async function checkStreak(player, sock, chatId, message) {
     }
 
     const milestones = {
-        10: 1000,
-        15: 1500,
-        20: 2000,
+        100: 10000,
+        200: 15000
     };
 
     if (milestones[player.gameStreak]) {
