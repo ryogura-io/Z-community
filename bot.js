@@ -72,7 +72,7 @@ class Bot {
                         await this.sock.sendMessage(
                             chatId,
                             {
-                                text: `💤 *${afkPlayer.name || u}* is AFK: \n"${afkPlayer.afkMessage}"`,
+                                text: `💤 *${afkPlayer.name || u}* is currently AFK. \n📝 Message: "${afkPlayer.afkMessage}"`,
                             },
                             { quoted: message },
                         );
@@ -109,6 +109,13 @@ class Bot {
             const Config = require("./models/Config");
             const configDoc = await Config.findOne({});
             if (configDoc?.disabledCommands?.includes(commandName)) {
+                await this.sock.sendMessage(
+                    chatId,
+                    {
+                        text: `🚫 The command ${commandName} is currently disabled.`,
+                    },
+                    { quoted: message },
+                );
                 console.log(
                     `[BLOCKED] Disabled command ${commandName} used by ${sender}`,
                 );
