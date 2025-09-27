@@ -305,8 +305,8 @@ const coreCommands = {
                         leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
                         leaderboard += `   💰 Shards: ${player.shards}\n`;
                         leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
-                        leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n`;
                         leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
+                        leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n`;
                     });
 
                     return sock.sendMessage(
@@ -379,8 +379,8 @@ const coreCommands = {
                     leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
                     leaderboard += `   💰 Shards: ${player.shards}\n`;
                     leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
-                    leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n`;
                     leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
+                    leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n`;
                 });
 
                 await sock.sendMessage(
