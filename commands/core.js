@@ -6,7 +6,7 @@ const Familia = require("../models/Familia");
 // helper to fetch characters live from GitHub
 async function getCharacters() {
     const res = await fetch(
-        "https://raw.githubusercontent.com/JiachenRen/get_waifu/master/data/waifu_details.json",
+        "https://github.com/ryogura-io/Z-community/releases/download/Utils/waifu_details.json",
     );
     if (!res.ok)
         throw new Error(`Failed to fetch characters: ${res.statusText}`);
