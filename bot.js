@@ -346,18 +346,29 @@ class Bot {
                 let expGain = 2; // Default EXP
 
                 if (["claim", "spawn"].includes(commandName)) {
-                    expGain = 2;
+                    expGain = 10;
                 } else if (["daily", "slot", "rob"].includes(commandName)) {
-                    expGain = 2;
+                    expGain = 10;
                 } else if (["register", "bonus"].includes(commandName)) {
-                    expGain = 5;
+                    expGain = 10;
                 }
 
                 player.exp += expGain;
 
-                // Level up check (every 1000 EXP = 1 level)
                 const oldLevel = player.level;
-                const newLevel = Math.floor(player.exp / 1000) + 1;
+
+                // Function to calculate total EXP needed for a given level
+                function expForLevel(level) {
+                    return ((level * (level + 1)) / 2) * 1000;
+                }
+
+                // Find the highest level the player qualifies for
+                let newLevel = oldLevel;
+                while (player.exp >= expForLevel(newLevel)) {
+                    newLevel++;
+                }
+
+                // If leveled up, apply rewards
                 if (newLevel > oldLevel) {
                     player.level = newLevel;
                     player.shards += newLevel * 100; // Level up bonus (shards)
