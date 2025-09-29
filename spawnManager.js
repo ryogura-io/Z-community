@@ -378,8 +378,11 @@ async function spawnCards(sock, msgQueue) {
                 activeSpawns.delete(groupId); // cleanup previous
             }
 
-            await spawnCard(sock, msgQueue, groupId);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            // 🎲 Probability check (e.g. 50% chance)
+    if (Math.random() < 0.85) {
+        await spawnCard(sock, msgQueue, groupId);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
         }
 
         console.log(
