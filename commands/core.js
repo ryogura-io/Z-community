@@ -2,6 +2,9 @@ const Player = require("../models/Player");
 const fetch = require("node-fetch");
 const Group = require("../models/Group");
 const Familia = require("../models/Familia");
+const axios = require("axios");
+const FormData = require("form-data");
+const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 // helper to fetch characters live from GitHub
 async function getCharacters() {
@@ -423,6 +426,105 @@ const coreCommands = {
         },
     },
 
+    setpp: {
+        description:
+            "Set your profile picture (uploads quoted image to Catbox and saves link)",
+        usage: "setpp <reply to image>",
+        adminOnly: false,
+        execute: async ({ sender, chatId, args, sock, message }) => {
+            try {
+                // Get quoted or direct image
+                const cited =
+                    message.message?.extendedTextMessage?.contextInfo
+                        ?.quotedMessage;
+                const quotedInfo =
+                    message.message?.extendedTextMessage?.contextInfo;
+                const directImage =
+                    message.message?.imageMessage ||
+                    message.message?.documentMessage;
+
+                if (!cited && !directImage) {
+                    return await sock.sendMessage(
+                        chatId,
+                        { text: "❌ Please reply to an image with `!setpp`" },
+                        { quoted: message },
+                    );
+                }
+
+                let targetMessage;
+                if (cited) {
+                    targetMessage = { message: cited };
+                    if (quotedInfo?.stanzaId) {
+                        targetMessage.key = { id: quotedInfo.stanzaId };
+                    }
+                } else {
+                    targetMessage = message;
+                }
+
+                // Download buffer
+                const buffer = await downloadMediaMessage(
+                    targetMessage,
+                    "buffer",
+                    {},
+                );
+                if (!buffer || !Buffer.isBuffer(buffer)) {
+                    throw new Error("Failed to download image buffer");
+                }
+
+                // Upload to Catbox
+                const form = new FormData();
+                form.append("fileToUpload", buffer, {
+                    filename: "profile.jpg",
+                });
+                form.append("reqtype", "fileupload");
+
+                const catboxRes = await axios.post(
+                    "https://catbox.moe/user/api.php",
+                    form,
+                    {
+                        headers: form.getHeaders(),
+                        maxContentLength: Infinity,
+                        maxBodyLength: Infinity,
+                        timeout: 30000,
+                    },
+                );
+
+                if (
+                    !catboxRes.data ||
+                    !String(catboxRes.data).startsWith("http")
+                ) {
+                    throw new Error("Catbox did not return a valid URL");
+                }
+
+                const url = String(catboxRes.data);
+
+                // Save to Player model
+                let player = await Player.findOne({ userId: sender });
+                if (!player) {
+                    player = new Player({
+                        userId: sender,
+                        name: sender.split("@")[0],
+                    });
+                }
+                player.profilePic = url;
+                await player.save();
+
+                await sock.sendMessage(
+                    chatId,
+                    { text: `✅ Profile picture updated!\n${url}` },
+                    { quoted: message },
+                );
+            } catch (err) {
+                console.error("setpp error:", err);
+                await sock.sendMessage(
+                    chatId,
+                    { text: "❌ Failed to set profile picture." },
+                    { quoted: message },
+                );
+            }
+        },
+    },
+
     profile: {
         description: "Show your profile details",
         usage: "profile",
@@ -463,10 +565,30 @@ const coreCommands = {
 
                 // Get profile picture
                 let pfpUrl;
+                if (player.profilePic && player.profilePic.startsWith("http")) {
+                    pfpUrl = player.profilePic;
+                } else {
+                    try {
+                        pfpUrl = await sock.profilePictureUrl(target, "image");
+                    } catch {
+                        pfpUrl = "https://i.waifu.pics/mJkPaVR.png";
+                    }
+                }
+
+                // Download profile pic safely
+                let buffer = null;
                 try {
-                    pfpUrl = await sock.profilePictureUrl(target, "image");
-                } catch {
-                    pfpUrl = "https://i.waifu.pics/mJkPaVR.png";
+                    const fetch = require("node-fetch");
+                    const res = await fetch(pfpUrl);
+                    buffer = Buffer.from(await res.arrayBuffer());
+                } catch (err) {
+                    console.warn(
+                        "Failed to fetch profile pic, using fallback:",
+                        err.message,
+                    );
+                    const fetch = require("node-fetch");
+                    const res = await fetch("https://i.waifu.pics/mJkPaVR.png");
+                    buffer = Buffer.from(await res.arrayBuffer());
                 }
 
                 const totalCards = player.collection.length;
@@ -494,11 +616,6 @@ const coreCommands = {
                     `🎮 *Game Wins:* ${player.gameWins || 0}\n` +
                     `📝 *Bio:* ${player.bio || "No bio set"}\n` +
                     `🎭 *Character:* ${player.character || "Not set"}`;
-
-                // Send with profile picture
-                const fetch = require("node-fetch");
-                const res = await fetch(pfpUrl);
-                const buffer = Buffer.from(await res.arrayBuffer());
 
                 await sock.sendMessage(
                     chatId,
