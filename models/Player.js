@@ -36,6 +36,7 @@ const playerSchema = new mongoose.Schema({
   // Profile
   bio: { type: String, default: "" },
   character: { type: String, default: "" },
+  profilePic: { type: String, default: "" },
 
   // Daily & Bonus
   bonusClaimed: { type: Boolean, default: false },
