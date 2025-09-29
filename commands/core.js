@@ -427,8 +427,7 @@ const coreCommands = {
     },
 
     setpp: {
-        description:
-            "Set your profile picture (uploads quoted image to Catbox and saves link)",
+        description: "Set your profile picture",
         usage: "setpp <reply to image>",
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
@@ -530,7 +529,7 @@ const coreCommands = {
         usage: "profile",
         aliases: ["p"],
         adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock, message }) => {
+        execute: async ({ sender, chatId, sock, message }) => {
             try {
                 let target;
 
@@ -692,6 +691,7 @@ const coreCommands = {
     character: {
         description: "Show random Character",
         usage: "character",
+        aliases: ["char"],
         adminOnly: false,
         execute: async ({ chatId, sock, message }) => {
             const characters = await getCharacters();
@@ -727,7 +727,7 @@ const coreCommands = {
             const caption =
                 `Name: *${character.name}*\n` +
                 `Appearances: ${appearances}\n\n` +
-                `Description: ${character.description.slice(0, 400)}...\n`
+                `Description: ${character.description.slice(0, 400)}...\n`;
 
             // Send message
             await sock.sendMessage(
@@ -744,6 +744,7 @@ const coreCommands = {
     addcharacter: {
         description: "Set your Character",
         usage: "addcharacter",
+        aliases: ["addchar"],
         adminOnly: false,
         execute: async ({ sender, chatId, sock, message }) => {
             // Get group last character
@@ -790,6 +791,7 @@ const coreCommands = {
     removecharacter: {
         description: "Remove your Character",
         usage: "removecharacter",
+        aliases: ["removechar", "delchar"],
         adminOnly: false,
         execute: async ({ sender, chatId, sock, message }) => {
             const player = await Player.findOne({ userId: sender });
