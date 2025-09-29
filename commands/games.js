@@ -32,8 +32,8 @@ async function checkStreak(player, sock, chatId, message) {
     }
 
     const milestones = {
-        100: 10000,
-        200: 15000
+        30: 10000,
+        50: 15000,
     };
 
     if (milestones[player.gameStreak]) {
@@ -316,7 +316,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
         aliases: ["pokemon"],
         adminOnly: false,
         execute: async (context) => {
-            const { chatId, bot, sock, sender, message } = context;
+            const { chatId, sock, sender, message } = context;
             if (isGameActive(chatId, sock, message)) return;
 
             try {
@@ -356,7 +356,12 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                     const imgBuffer = Buffer.from(imgRes.data);
 
                     // use the dedicated wrapper
-                    await bot.sendImage(chatId, imgBuffer, caption);
+                    // await sock.sendMessage(chatId, { img :imgBuffer, caption);
+                    await sock.sendMessage(
+                        chatId,
+                        { image: imgBuffer, caption: caption },
+                        { quoted: message },
+                    );
                     // Auto delete after 10s
                     setTimeout(async () => {
                         const game = gameStates.get(chatId);
@@ -552,7 +557,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
         usage: "a <answer>",
         adminOnly: false,
         execute: async (context) => {
-            const { args, chatId, sock, bot, message, sender } = context;
+            const { args, chatId, sock, message, sender } = context;
 
             if (args.length === 0) {
                 await sock.sendMessage(
@@ -606,7 +611,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                         answer,
                         chatId,
                         sock,
-                        bot,
+                        message,
                         context.sender,
                     );
                     break;
@@ -856,16 +861,25 @@ async function handleTriviaAnswer(
     }
 }
 
-async function handleTicTacToeMove(gameState, input, chatId, bot, sender) {
+async function handleTicTacToeMove(
+    gameState,
+    input,
+    chatId,
+    sock,
+    message,
+    sender,
+) {
     const game = gameState.game;
     const surrender = /^(surrender|give up)$/i.test(input);
 
     if (!surrender && !/^[1-9]$/.test(input)) return;
 
     if (!surrender && sender !== game.currentTurn) {
-        await bot.sendMessage(chatId, "❌ Not your turn!", {
-            mentions: [sender],
-        });
+        await sock.sendMessage(
+            chatId,
+            { text: "❌ Not your turn!", mentions: [sender] },
+            { quoted: message },
+        );
         return;
     }
 
@@ -874,7 +888,11 @@ async function handleTicTacToeMove(gameState, input, chatId, bot, sender) {
         : game.turn(sender === game.playerO, parseInt(input) - 1);
 
     if (!moveOk) {
-        await bot.sendMessage(chatId, "❌ Invalid move!");
+        await sock.sendMessage(
+            chatId,
+            { text: "❌ Invalid move!" },
+            { quoted: message },
+        );
         return;
     }
 
@@ -924,9 +942,11 @@ Player ❎: @${game.playerX.split("@")[0]}
 Player ⭕: @${game.playerO.split("@")[0]}
 `;
 
-    await bot.sendMessage(chatId, msg, {
-        mentions: [game.playerX, game.playerO],
-    });
+    await sock.sendMessage(
+        chatId,
+        { text: msg, mentions: [game.playerX, game.playerO] },
+        { quoted: message },
+    );
 
     if (winner || isTie) {
         gameStates.delete(chatId);
