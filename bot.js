@@ -198,54 +198,6 @@ class Bot {
         return null;
     }
 
-    async sendMessage(chatId, text, options = {}) {
-        try {
-            await this.msgQueue.sendMessage(chatId, {
-                text: text,
-                ...options,
-            });
-        } catch (error) {
-            console.error("Error sending message:", error);
-        }
-    }
-
-    async sendImage(chatId, buffer, caption = "") {
-        try {
-            await this.msgQueue.sendMessage(chatId, {
-                image: buffer,
-                caption: caption,
-                mimetype: "image/jpeg", // or 'image/png' depending on the buffer
-            });
-        } catch (error) {
-            console.error("Error sending image:", error);
-        }
-    }
-
-    async sendVideo(chatId, buffer, caption = "", options = {}) {
-        try {
-            await this.msgQueue.sendMessage(chatId, {
-                video: buffer,
-                caption: caption,
-                mimetype: "video/mp4",
-                gifPlayback: options.gif || false,
-                ...options,
-            });
-        } catch (error) {
-            console.error("Error sending video:", error);
-        }
-    }
-
-    async sendAudio(chatId, buffer) {
-        try {
-            await this.msgQueue.sendMessage(chatId, {
-                audio: buffer,
-                mimetype: "audio/mp4",
-            });
-        } catch (error) {
-            console.error("Error sending audio:", error);
-        }
-    }
-
     async handleGroupUpdate(updates) {
         try {
             for (const update of updates) {
