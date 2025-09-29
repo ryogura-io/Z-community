@@ -61,12 +61,12 @@ function generateCaptcha() {
 // Tier spawn rates and prices
 const tierConfig = {
     1: { weight: 45, price: 100 },
-    2: { weight: 25, price: 250 },
+    2: { weight: 26, price: 250 },
     3: { weight: 17, price: 500 },
     4: { weight: 10, price: 1000 },
-    5: { weight: 2, price: 2000 },
-    6: { weight: 0.7, price: 5000 },
-    S: { weight: 0.3, price: 10000 },
+    5: { weight: 1.5, price: 2000 },
+    6: { weight: 0.4, price: 5000 },
+    S: { weight: 0.1, price: 10000 },
 };
 
 // Get weighted random card based on tier spawn rates
