@@ -582,7 +582,11 @@ const moderatorCommands = {
                     infoMsg += `${index + 1}. *${player.name}* - ${totalCopies} copies\n`;
                 });
 
-                await sock.sendMessage(chatId, { text: infoMsg}, { quoted: message });
+                await sock.sendMessage(
+                    chatId,
+                    { text: infoMsg },
+                    { quoted: message },
+                );
             } catch (error) {
                 console.error("CardInfo error:", error);
                 await sock.sendMessage(
@@ -715,6 +719,68 @@ const moderatorCommands = {
                 await sock.sendMessage(
                     chatId,
                     { text: "❌ Error fetching cards." },
+                    { quoted: message },
+                );
+            }
+        },
+    },
+
+    resume: {
+        description: "Re-enable a previously disabled command globally",
+        usage: "resume <command_name>",
+        adminOnly: true,
+        execute: async ({ sender, chatId, args, sock, message }) => {
+            if (!args[0]) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Usage: !resume <command_name>" },
+                    { quoted: message },
+                );
+            }
+
+            const commandName = args[0].toLowerCase();
+
+            try {
+                let configDoc = await Config.findOne({});
+                if (!configDoc || !configDoc.disabledCommands) {
+                    return sock.sendMessage(
+                        chatId,
+                        {
+                            text: `❌ Command '${commandName}' was never disabled!`,
+                        },
+                        { quoted: message },
+                    );
+                }
+
+                if (!configDoc.disabledCommands.includes(commandName)) {
+                    return sock.sendMessage(
+                        chatId,
+                        {
+                            text: `❌ Command '${commandName}' is not disabled!`,
+                        },
+                        { quoted: message },
+                    );
+                }
+
+                // Remove the command from disabled list
+                configDoc.disabledCommands = configDoc.disabledCommands.filter(
+                    (cmd) => cmd !== commandName,
+                );
+
+                await configDoc.save();
+
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        text: `✅ Command '${commandName}' has been re-enabled globally!`,
+                    },
+                    { quoted: message },
+                );
+            } catch (error) {
+                console.error("Resume command error:", error);
+                await sock.sendMessage(
+                    chatId,
+                    { text: "❌ Error re-enabling command." },
                     { quoted: message },
                 );
             }
