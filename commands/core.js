@@ -511,7 +511,7 @@ const coreCommands = {
 
                 await sock.sendMessage(
                     chatId,
-                    { text: `✅ Profile picture updated!\n${url}` },
+                    { text: `✅ Profile picture updated!` },
                     { quoted: message },
                 );
             } catch (err) {
@@ -725,10 +725,9 @@ const coreCommands = {
                 character.appearances?.map((a) => a.name).join(", ") ||
                 "Unknown";
             const caption =
-                `*${character.name}* (${character.romaji_name || "N/A"})\n\n` +
-                `*Appearances:* ${appearances}\n\n` +
-                `*Description:* ${character.description.slice(0, 400)}...\n\n` +
-                `🔗 [More Info](${character.url})`;
+                `Name: *${character.name}*\n` +
+                `Appearances: ${appearances}\n\n` +
+                `Description: ${character.description.slice(0, 400)}...\n`
 
             // Send message
             await sock.sendMessage(
