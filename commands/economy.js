@@ -652,7 +652,7 @@ const economyCommands = {
                 let reel3 = getWeightedSymbol();
                 if (Math.random() < 0.5) {
                     // 50% of the time
-                    const common = ["🍒", "🍋", "🍊", "🍇"];
+                    const common = ["🍒", "🍋", "🍊"];
                     const symbol =
                         common[Math.floor(Math.random() * common.length)];
                     reel1 = reel2 = reel3 = symbol;
@@ -666,7 +666,7 @@ const economyCommands = {
                         multiplier = 4; // Star x5
                     else if (reel1 === "🍇")
                         multiplier = 3; // Grape x3
-                    else multiplier = 2; // Others x2
+                    else multiplier = 1.5; // Others x2
                 } else if (
                     reel1 === reel2 ||
                     reel2 === reel3 ||
