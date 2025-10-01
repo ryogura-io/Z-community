@@ -32,8 +32,12 @@ async function checkStreak(player, sock, chatId, message) {
     }
 
     const milestones = {
-        30: 10000,
-        50: 15000,
+        5: 1000,
+        10: 2000,
+        20: 4000,
+        40: 8000,
+        80: 16000,
+        160: 20000,
     };
 
     if (milestones[player.gameStreak]) {
@@ -93,7 +97,7 @@ const gameCommands = {
                     word,
                     guessed: Array(word.length).fill("_"),
                     wrongGuesses: [],
-                    maxWrong: 6,
+                    maxWrong: 7,
                     gameType: "hangman",
                 };
 
@@ -442,7 +446,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                 setTimeout(async () => {
                     const game = gameStates.get(chatId);
 
-                    if (game && game.gameType === "scramble") {
+                    if (game && game.answer === word) {
                         gameStates.delete(chatId);
 
                         await sock.sendMessage(
@@ -620,7 +624,33 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                     if (answer === gameState.answer) {
                         const player = await Player.findOne({ userId: sender });
                         player.lastGameResult = "win";
-                        await checkStreak(player, sock, chatId, message);
+                        player.gameWins++;
+                        if (player.lastGameResult === "win") {
+                            player.gameStreak += 1;
+                        } else {
+                            player.gameStreak = 1;
+                        }
+
+                        const milestones = {
+                            30: 1500,
+                            40: 3000,
+                            60: 6000,
+                            80: 12000,
+                            100: 24000,
+                            200: 50000,
+                        };
+
+                        if (milestones[player.gameStreak]) {
+                            let reward = milestones[player.gameStreak];
+                            player.shards += reward;
+                            await sock.sendMessage(
+                                chatId,
+                                {
+                                    text: `🔥 *Streak Bonus!* ${player.gameStreak} wins in a row!\n💰 You earned +${reward} shards!`,
+                                },
+                                { quoted: message },
+                            );
+                        }
                         await player.save();
                         await sock.sendMessage(
                             chatId,
@@ -923,6 +953,34 @@ async function handleTicTacToeMove(
     let status;
     if (winner) {
         status = `🎉 @${winner.split("@")[0]} wins the game!`;
+        const player = await Player.findOne({ userId: winner });
+        player.gameWins++;
+        if (player.lastGameResult === "win") {
+            player.gameStreak += 1;
+        } else {
+            player.gameStreak = 1;
+        }
+
+        const milestones = {
+            5: 1000,
+            10: 2000,
+            20: 4000,
+            40: 8000,
+            80: 16000,
+            160: 20000,
+        };
+
+        if (milestones[player.gameStreak]) {
+            let reward = milestones[player.gameStreak];
+            player.shards += reward;
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: `🔥 *Streak Bonus!* ${player.gameStreak} wins in a row!\n💰 You earned +${reward} shards!`,
+                },
+                { quoted: message },
+            );
+        }
     } else if (isTie) {
         status = `🤝 It's a draw!`;
     } else {
