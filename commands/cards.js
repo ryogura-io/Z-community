@@ -546,71 +546,77 @@ const cardCommands = {
     },
 
     collector: {
-        description: "Display top 3 players with most cards in a series",
-        usage: "collector <series_name>",
-        aliases: ["cltr"],
-        adminOnly: false,
-        execute: async ({ chatId, args, bot, sock, message }) => {
-            if (!args[0]) {
+    description: "Display top 3 players with most cards in a series",
+    usage: "collector <series_name>",
+    aliases: ["cltr"],
+    adminOnly: false,
+    execute: async ({ chatId, args, bot, sock, message }) => {
+        if (!args[0]) {
+            return sock.sendMessage(
+                chatId,
+                { text: "❌ Usage: !collector <series_name>" },
+                { quoted: message },
+            );
+        }
+
+        try {
+            const seriesName = args.join(" ").toLowerCase();
+            const players = await Player.find({}).populate("collection deck");
+
+            const collectors = players
+                .map((player) => {
+                    const allCards = [
+                        ...(player.collection || []),
+                        ...(player.deck || []),
+                    ];
+
+                    const seriesCards = allCards.filter(
+                        (card) =>
+                            card.series &&
+                            card.series.toLowerCase().includes(seriesName),
+                    );
+
+                    return {
+                        name: player.name,
+                        count: seriesCards.length,
+                    };
+                })
+                .filter((collector) => collector.count > 0)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 3);
+
+            if (collectors.length === 0) {
                 return sock.sendMessage(
                     chatId,
-                    { text: "❌ Usage: !collector <series_name>" },
+                    {
+                        text: `📦 No collectors found for series: ${seriesName}`,
+                    },
                     { quoted: message },
                 );
             }
 
-            try {
-                const seriesName = args.join(" ");
-                const players = await Player.find({}).populate("collection");
+            let collectorMsg = `🏆 *Top ${seriesName} Collectors*\n\n`;
+            collectors.forEach((collector, index) => {
+                const medal =
+                    index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉";
+                collectorMsg += `${medal} *${collector.name}* - ${collector.count} cards\n`;
+            });
 
-                const collectors = players
-                    .map((player) => {
-                        const seriesCards = player.collection.filter((card) =>
-                            card.series
-                                .toLowerCase()
-                                .includes(seriesName.toLowerCase()),
-                        );
-                        return {
-                            name: player.name,
-                            count: seriesCards.length,
-                        };
-                    })
-                    .filter((collector) => collector.count > 0)
-                    .sort((a, b) => b.count - a.count)
-                    .slice(0, 3);
-
-                if (collectors.length === 0) {
-                    return sock.sendMessage(
-                        chatId,
-                        {
-                            text: `📦 No collectors found for series: ${seriesName}`,
-                        },
-                        { quoted: message },
-                    );
-                }
-
-                let collectorMsg = `🏆 *Top ${seriesName} Collectors*\n\n`;
-                collectors.forEach((collector, index) => {
-                    const medal =
-                        index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉";
-                    collectorMsg += `${medal} *${collector.name}* - ${collector.count} cards\n`;
-                });
-
-                await sock.sendMessage(
-                    chatId,
-                    { text: collectorMsg },
-                    { quoted: message },
-                );
-            } catch (error) {
-                console.error("Collector error:", error);
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Error fetching collectors." },
-                    { quoted: message },
-                );
-            }
-        },
+            await sock.sendMessage(
+                chatId,
+                { text: collectorMsg },
+                { quoted: message },
+            );
+        } catch (error) {
+            console.error("Collector error:", error);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error fetching collectors." },
+                { quoted: message },
+            );
+        }
     },
+},
 
     series: {
         description: "Show all possessed cards in a series by tier",
