@@ -508,8 +508,7 @@ const utilityCommands = {
                     `📺 Format: ${anime.format || 'Unknown'}\n` +
                     `📊 Status: ${anime.status || 'Unknown'}\n` +
                     `🏷️ Genres: ${anime.genres ? anime.genres.join(', ') : 'Unknown'}\n\n` +
-                    `📝 *Description:*\n${description}\n\n` +
-                    `🔗 [AniList Link](${anime.siteUrl})`;
+                    `📝 *Description:*\n${description}`
 
                 if (animeText.length > 1000) {
                     animeText = animeText.substring(0, 950) + '...';
