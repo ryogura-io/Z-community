@@ -7,6 +7,7 @@ const ffmpegStatic = require("ffmpeg-static");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const { sendCard, createCardGrid } = require("../utils/deckHelper");
 
 // Set FFmpeg path
 ffmpeg.setFfmpegPath(ffmpegStatic);
@@ -899,255 +900,35 @@ const cardCommands = {
     },
 
     deck: {
-        description: "Show your deck as a 4x3 grid image or specific card",
-        usage: "deck [deck_number]",
-        aliases: ["d"],
-        adminOnly: false,
-        execute: async ({ sender, chatId, message, sock, args }) => {
-            try {
-                const player = await Player.findOne({
-                    userId: sender,
-                }).populate("deck");
-                if (!player) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: `❌ Please register first!` },
-                        { quoted: message },
-                    );
-                }
+    description: "Show your deck as a grid or individual card",
+    usage: "deck [deck_number]",
+    aliases: ["d"],
+    adminOnly: false,
+    execute: async ({ sender, chatId, message, sock, args }) => {
+        const player = await Player.findOne({ userId: sender }).populate("deck");
+        if (!player) {
+            return sock.sendMessage(chatId, { text: "❌ Please register first!" }, { quoted: message });
+        }
 
-                // If user requested a specific slot
-                if (args[0] && !isNaN(args[0])) {
-                    const cardIndex = parseInt(args[0]) - 1;
-                    if (cardIndex < 0 || cardIndex >= 12) {
-                        return sock.sendMessage(
-                            chatId,
-                            { text: "❌ Deck position must be 1-12!" },
-                            { quoted: message },
-                        );
-                    }
+        // single card view
+        if (args[0] && !isNaN(args[0])) {
+            const idx = parseInt(args[0]) - 1;
+            const card = player.deck[idx];
+            if (!card) return sock.sendMessage(chatId, { text: "❌ No card at that position!" }, { quoted: message });
 
-                    const card = player.deck[cardIndex];
-                    if (!card) {
-                        return sock.sendMessage(
-                            chatId,
-                            { text: `❌ No card at deck position ${args[0]}!` },
-                            { quoted: message },
-                        );
-                    }
-                    const axios = require("axios");
-                    const cardMsg =
-                        `┌──「 *CARD DETAILS* 」\n\n` +
-                        `📜 *Name:* ${card.name}\n` +
-                        `⭐ *Tier:* ${card.tier}\n` +
-                        `🎭 *Series:* ${card.series}\n` +
-                        `👨‍🎨 *Maker:* ${card.maker}`;
+            const caption = `📜 *Name:* ${card.name}\n⭐ *Tier:* ${card.tier}\n🎭 *Series:* ${card.series}\n👨‍🎨 *Maker:* ${card.maker}`;
+            return sendCard(sock, chatId, message, card, caption);
+        }
 
-                    if (
-                        (card.tier === "6" || card.tier === "S") &&
-                        (card.img.endsWith(".webm") ||
-                            card.img.endsWith(".gif"))
-                    ) {
-                        try {
-                            const mediaBuffer = (
-                                await axios.get(card.img, {
-                                    responseType: "arraybuffer",
-                                })
-                            ).data;
-                            const outputPath = path.join(
-                                __dirname,
-                                "..",
-                                `temp_output_${Date.now()}.mp4`,
-                            );
+        // grid view
+        if (player.deck.length === 0) {
+            return sock.sendMessage(chatId, { text: "❌ Your deck is empty!" }, { quoted: message });
+        }
 
-                            await convertToMp4(mediaBuffer, outputPath);
-                            const videoBuffer = fs.readFileSync(outputPath);
-                            fs.unlinkSync(outputPath); // Clean up
-
-                            await sock.sendMessage(
-                                chatId,
-                                {
-                                    video: videoBuffer,
-                                    caption: cardMsg,
-                                    mimetype: "video/mp4",
-                                    gifPlayback: true,
-                                },
-                                { quoted: message },
-                            );
-                        } catch (conversionError) {
-                            console.error(
-                                "Video conversion error:",
-                                conversionError,
-                            );
-                            // Fallback to sending as image
-                            const imgBuffer = (
-                                await axios.get(card.img, {
-                                    responseType: "arraybuffer",
-                                })
-                            ).data;
-                            await sock.sendMessage(
-                                chatId,
-                                {
-                                    image: imgBuffer,
-                                    caption: cardMsg,
-                                },
-                                { quoted: message },
-                            );
-                        }
-                    } else {
-                        const imgBuffer = (
-                            await axios.get(card.img, {
-                                responseType: "arraybuffer",
-                            })
-                        ).data;
-                        await sock.sendMessage(
-                            chatId,
-                            {
-                                image: imgBuffer,
-                                caption: cardMsg,
-                            },
-                            { quoted: message },
-                        );
-                    }
-                } else {
-                    // Show deck as 4x3 grid image
-                    const deckCards = player.deck.filter(
-                        (card) => card !== null && card !== undefined,
-                    );
-
-                    if (deckCards.length === 0) {
-                        return sock.sendMessage(
-                            chatId,
-                            { text: `❌ Your deck is empty!` },
-                            { quoted: message },
-                        );
-                    }
-
-                    // --- dynamic grid (3 columns, auto rows) ---
-                    const sharp = require("sharp");
-                    const axios = require("axios");
-
-                    // const deckCards = player.deck.filter(c => c !== null && c !== undefined); // already defined above
-                    const columns = 3; // keep 3 columns, change if you want
-                    const rows = Math.max(
-                        1,
-                        Math.ceil(deckCards.length / columns),
-                    );
-
-                    const cardWidth = 230;
-                    const cardHeight = 300;
-                    const padding = 10; // space between cards and around edges
-
-                    const canvasWidth =
-                        columns * cardWidth + (columns + 1) * padding;
-                    const canvasHeight =
-                        rows * cardHeight + (rows + 1) * padding;
-
-                    // create background sized to fit all cards
-                    const background = await sharp({
-                        create: {
-                            width: canvasWidth,
-                            height: canvasHeight,
-                            channels: 4,
-                            background: { r: 255, g: 255, b: 255, alpha: 1 },
-                        },
-                    }).png();
-
-                    const composite = [];
-
-                    for (let i = 0; i < deckCards.length; i++) {
-                        const row = Math.floor(i / columns);
-                        const col = i % columns;
-
-                        const x = Math.round(
-                            padding + col * (cardWidth + padding),
-                        );
-                        const y = Math.round(
-                            padding + row * (cardHeight + padding),
-                        );
-
-                        const card = deckCards[i];
-
-                        try {
-                            const cardImgResponse = await axios.get(card.img, {
-                                responseType: "arraybuffer",
-                                timeout: 10000,
-                            });
-
-                            const resizedCard = await sharp(
-                                Buffer.from(cardImgResponse.data),
-                            )
-                                .resize(cardWidth, cardHeight, { fit: "cover" })
-                                .png()
-                                .toBuffer();
-
-                            composite.push({
-                                input: resizedCard,
-                                left: x,
-                                top: y,
-                            });
-                        } catch (cardError) {
-                            console.error(
-                                `Error loading card image for ${card.name}:`,
-                                cardError,
-                            );
-
-                            const errorSvg = `
-                          <svg width="${cardWidth}" height="${cardHeight}">
-                            <rect width="100%" height="100%" fill="#cccccc"/>
-                          </svg>
-                        `;
-
-                            const errorPlaceholder = await sharp(
-                                Buffer.from(errorSvg),
-                            )
-                                .png()
-                                .toBuffer();
-
-                            composite.push({
-                                input: errorPlaceholder,
-                                left: x,
-                                top: y,
-                            });
-                        }
-                    }
-
-                    // composite and send
-                    const imageBuffer = await background
-                        .composite(composite)
-                        .png()
-                        .toBuffer();
-                    const readMore = String.fromCharCode(8206).repeat(4001);
-                    let deckMsg = `🃏 *${player.name}'s Deck*\n\n${readMore}`;
-
-                    for (let i = 0; i < 12; i++) {
-                        const card = player.deck[i];
-                        if (card) {
-                            deckMsg +=
-                                `🎴 *${i + 1}.* *${card.name}*` +
-                                `\n        Series: ${card.series}` +
-                                `\n        Tier: ${card.tier}\n\n`;
-                        }
-                    }
-
-                    deckMsg += `\n💡 Use \`!deck <number>\` to see individual cards`;
-
-                    await sock.sendMessage(
-                        chatId,
-                        { image: imageBuffer, caption: deckMsg },
-                        { quoted: message },
-                    );
-                }
-            } catch (error) {
-                console.error("Deck error:", error);
-                await sock.sendMessage(
-                    chatId,
-                    { text: `❌ Error fetching deck.` },
-                    { quoted: message },
-                );
-            }
-        },
-    },
+        const imgBuffer = await createCardGrid(player.deck.filter(Boolean));
+        return sock.sendMessage(chatId, { image: imgBuffer, caption: `🃏 *${player.name}'s Deck*` }, { quoted: message });
+    }
+}
 };
 
 module.exports = cardCommands;
