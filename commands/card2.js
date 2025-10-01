@@ -1018,4 +1018,93 @@ module.exports = {
       }
     },
   },
+
+  maker: {
+    description: "Show all possessed cards by maker sorted by tier",
+    usage: "maker <maker_name>",
+    aliases: ["ms", "makersearch"],
+    adminOnly: false,
+    execute: async ({ sender, message, chatId, args, bot, sock }) => {
+        if (!args[0]) {
+            return sock.sendMessage(
+                chatId,
+                { text: "❌ Usage: !maker <maker_name>" },
+                { quoted: message },
+            );
+        }
+
+        try {
+            const player = await Player.findOne({
+                userId: sender,
+            }).populate("collection deck");
+            if (!player) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Please register first!" },
+                    { quoted: message },
+                );
+            }
+
+            const makerName = args.join(" ");
+            const collectionCards = player.collection || [];
+            const deckCards = player.deck || [];
+
+            // Tag location with index
+            const allCards = [
+                ...collectionCards.map((c, i) => ({
+                    ...c.toObject(),
+                    location: `📦 Collection #${i + 1}`,
+                })),
+                ...deckCards
+                    .map((c, i) =>
+                        c
+                            ? {
+                                  ...c.toObject(),
+                                  location: `📥 Deck #${i + 1}`,
+                              }
+                            : null,
+                    )
+                    .filter((c) => c),
+            ];
+
+            const makerCards = allCards.filter((card) =>
+                card.maker &&
+                card.maker.toLowerCase().includes(makerName.toLowerCase()),
+            );
+
+            if (makerCards.length === 0) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: `📦 No cards found for maker: ${makerName}` },
+                    { quoted: message },
+                );
+            }
+
+            const tierOrder = ["S", "6", "5", "4", "3", "2", "1"];
+            const sortedCards = makerCards.sort(
+                (a, b) =>
+                    tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier),
+            );
+
+            let makerMsg = `🎨 *${player.name}'s ${makerName} Cards (${makerCards.length})*\n\n`;
+            sortedCards.forEach((card, index) => {
+                makerMsg += `${index + 1}. ${card.name} (Tier ${card.tier})\n`;
+            });
+
+            await sock.sendMessage(
+                chatId,
+                { text: makerMsg },
+                { quoted: message },
+            );
+        } catch (error) {
+            console.error("Maker error:", error);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error fetching maker cards." },
+                { quoted: message },
+            );
+        }
+    },
+},
+
 };
