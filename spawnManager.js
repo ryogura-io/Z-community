@@ -315,7 +315,7 @@ function cleanupExpiredSpawns() {
 }
 
 // Flexible spawn times array (minutes in each hour)
-const spawnTimes = [0, 20, 40]; // default: every hour at :00 and :30
+const spawnTimes = [0, 30]; // default: every hour at :00 and :30
 
 function scheduleCardSpawns(sock, msgQueue) {
     setInterval(cleanupExpiredSpawns, 10 * 60 * 1000);
@@ -377,12 +377,8 @@ async function spawnCards(sock, msgQueue) {
             if (activeSpawns.has(groupId)) {
                 activeSpawns.delete(groupId); // cleanup previous
             }
-
-            // 🎲 Probability check (e.g. 50% chance)
-    if (Math.random() < 0.85) {
         await spawnCard(sock, msgQueue, groupId);
         await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
         }
 
         console.log(
