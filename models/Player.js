@@ -26,6 +26,14 @@ const playerSchema = new mongoose.Schema({
   collection: [{ type: mongoose.Schema.Types.ObjectId, ref: "Card" }], // all owned cards
   inventory: [{ type: String }], // items
 
+  //inventory
+  inventory: [
+        {
+            item: { type: String, required: true }, // e.g., "common pack"
+            quantity: { type: Number, default: 0 }, // how many the player owns
+        }
+    ]
+
   // Status & Settings
   isModerator: { type: Boolean, default: false },
   isBanned: { type: Boolean, default: false },
@@ -35,7 +43,8 @@ const playerSchema = new mongoose.Schema({
 
   // Profile
   bio: { type: String, default: "" },
-  character: { type: String, default: "" },
+  characterID: { type: Number, default: 0 },
+  characterName: { type: String, default: "" },
   profilePic: { type: String, default: "" },
 
   // Daily & Bonus
