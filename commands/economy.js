@@ -302,6 +302,72 @@ const economyCommands = {
         },
     },
 
+    weekly: {
+    description: "Claim your weekly reward (7-day cooldown) with a chance for shards",
+    usage: "weekly",
+    adminOnly: false,
+    execute: async ({ sender, chatId, sock, message }) => {
+        try {
+            const player = await Player.findOne({ userId: sender });
+            if (!player) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Please register first using !register <name>" },
+                    { quoted: message }
+                );
+            }
+
+            const now = new Date();
+            const lastWeekly = player.lastWeekly || new Date(0);
+            const timeDiff = now - lastWeekly;
+            const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+            if (timeDiff < sevenDaysMs) {
+                const timeLeft = sevenDaysMs - timeDiff;
+                const daysLeft = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
+                const hoursLeft = Math.floor(
+                    (timeLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)
+                );
+
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text: `⏰ Weekly reward already claimed! Try again in ${daysLeft}d ${hoursLeft}h`,
+                    },
+                    { quoted: message }
+                );
+            }
+
+            // Add 1 common pack to inventory
+            const { addItemToInventory } = require("../utils/inventoryHelper");
+            await addItemToInventory(sender, "common pack", 1);
+
+            // 20% chance to add 2000 shards
+            let shardBonus = 0;
+            if (Math.random() < 0.2) {
+                shardBonus = 2000;
+                player.shards += shardBonus;
+            }
+
+            player.lastWeekly = now;
+            await player.save();
+
+            let reply = `📦 Weekly reward claimed! You received:\n- 1 Common Pack`;
+            if (shardBonus > 0) reply += `\n💰 Lucky bonus! +${shardBonus} shards!`;
+
+            await sock.sendMessage(chatId, { text: reply }, { quoted: message });
+        } catch (error) {
+            console.error("Weekly error:", error);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error claiming weekly reward." },
+                { quoted: message }
+            );
+        }
+    }
+},
+
+
     deposit: {
         description: "Transfer money to your vault",
         usage: "deposit <amount>",
