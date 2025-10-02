@@ -50,6 +50,7 @@ const playerSchema = new mongoose.Schema({
   // Daily & Bonus
   bonusClaimed: { type: Boolean, default: false },
   lastDaily: { type: Date, default: null },
+  lastWeekly: { type: Date, default: null },
 
   // streak tracking
   gameWins: { type: Number, default: 0 },
