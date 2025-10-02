@@ -977,11 +977,9 @@ const moderatorCommands = {
                 const readMore = String.fromCharCode(8206).repeat(4001);
                 let deckMsg = `🃏 *Event Deck*\n\n${readMore}`;
 
-                deck.forEach((card, i) => {
+deck.forEach((card, i) => {
                     if (card) {
-                        deckMsg += `🎴 *${i + 1}.* ${card.name}\n        
-                        Event: ${card.event}\n
-                        Tier: ${card.tier}\n\n`;
+                        deckMsg += `🎴 *${i + 1}.* ${card.name}\n     Event: ${card.event}\n     Tier: ${card.tier}\n\n`;
                     }
                 });
 
