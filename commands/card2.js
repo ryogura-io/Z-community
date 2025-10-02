@@ -3,48 +3,9 @@ const Card = require("../models/Card");
 const CardShop = require("../models/CardShop");
 const axios = require("axios");
 const spawnManager = require("../spawnManager");
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegStatic = require("ffmpeg-static");
 const fs = require("fs");
 const path = require("path");
-
-// Set FFmpeg path
-ffmpeg.setFfmpegPath(ffmpegStatic);
-
-// Helper function to convert media to MP4
-async function convertToMp4(inputBuffer, outputPath) {
-  return new Promise((resolve, reject) => {
-    const tempInputPath = path.join(
-      __dirname,
-      "..",
-      "temp_input_" + Date.now(),
-    );
-
-    // Write buffer to temporary file
-    fs.writeFileSync(tempInputPath, inputBuffer);
-
-    ffmpeg(tempInputPath)
-      .toFormat("mp4")
-      .videoCodec("libx264")
-      .audioCodec("aac")
-      .outputOptions([
-        "-movflags +faststart",
-        "-pix_fmt yuv420p",
-        "-vf scale=trunc(iw/2)*2:trunc(ih/2)*2", // Ensure even dimensions
-      ])
-      .on("end", () => {
-        fs.unlinkSync(tempInputPath); // Clean up temp input file
-        resolve();
-      })
-      .on("error", (err) => {
-        if (fs.existsSync(tempInputPath)) {
-          fs.unlinkSync(tempInputPath); // Clean up on error
-        }
-        reject(err);
-      })
-      .save(outputPath);
-  });
-}
+const { sendCard, createCardGrid } = require("../utils/deckHelper");
 
 // Helper function to generate random captcha
 function generateCaptcha() {
@@ -79,12 +40,11 @@ function formatCardShopList(shopCards) {
 
 module.exports = {
   cardshop: {
-    description: "View cards in the marketplace or specific card details",
+    description: "View cards in cardshop",
     usage: "cardshop [index]",
     aliases: ["market"],
     adminOnly: false,
-    execute: async ({ sender, chatId, sock, message, args }) => {
-      try {
+    execute: async ({ chatId, sock, message, args }) => {
         // Clean up expired cards first
         await CardShop.cleanupExpiredCards();
 
@@ -92,7 +52,8 @@ module.exports = {
           .populate("cardId")
           .sort({ listedAt: 1 });
 
-        // If user wants to see a specific card
+        // single card
+              // If user wants to see a specific card
         if (args[0] && !isNaN(args[0])) {
           const cardIndex = parseInt(args[0]) - 1;
           if (cardIndex < 0 || cardIndex >= shopCards.length) {
@@ -109,7 +70,7 @@ module.exports = {
             Math.floor((shopCard.expiresAt - Date.now()) / (1000 * 60 * 60)),
           );
 
-          const cardMsg =
+          const caption =
             `🏪 *Card Shop ${args[0]}*\n\n` +
             `📜 *Name:* ${shopCard.cardId.name}\n` +
             `⭐ *Tier:* ${shopCard.cardId.tier}\n` +
@@ -119,171 +80,15 @@ module.exports = {
             `⏰ *Time Left:* ${timeLeft} hours\n` +
             `🔑 *Purchase captcha:* ${shopCard.purchaseCaptcha}\n\n` +
             `💡 Use \`!purchase ${shopCard.purchaseCaptcha}\` to buy`;
-
-          const imgBuffer = (
-            await axios.get(shopCard.cardId.img, {
-              responseType: "arraybuffer",
-            })
-          ).data;
-
-          // return sock.sendMessage(chatId, {
-          //   image: imgBuffer,
-          //   caption: cardMsg
-          // }, { quoted: message })
-
-          if (
-            (shopCard.cardId.tier === "6" || shopCard.cardId.tier === "S") &&
-            (shopCard.cardId.img.endsWith(".webm") ||
-              shopCard.cardId.img.endsWith(".gif"))
-          ) {
-            try {
-              const mediaBuffer = (
-                await axios.get(shopCard.cardId.img, {
-                  responseType: "arraybuffer",
-                })
-              ).data;
-              const outputPath = path.join(
-                __dirname,
-                "..",
-                `temp_output_${Date.now()}.mp4`,
-              );
-
-              await convertToMp4(mediaBuffer, outputPath);
-              const videoBuffer = fs.readFileSync(outputPath);
-              fs.unlinkSync(outputPath); // Clean up
-
-              return sock.sendMessage(
-                chatId,
-                {
-                  video: videoBuffer,
-                  caption: cardMsg,
-                  mimetype: "video/mp4",
-                  gifPlayback: true,
-                },
-                { quoted: message },
-              );
-            } catch (conversionError) {
-              console.error("Video conversion error:", conversionError);
-              // Fallback to sending as image
-              const imgBuffer = (
-                await axios.get(shopCard.cardId.img, {
-                  responseType: "arraybuffer",
-                })
-              ).data;
-              return sock.sendMessage(
-                chatId,
-                {
-                  image: imgBuffer,
-                  caption: cardMsg,
-                },
-                { quoted: message },
-              );
-            }
-          } else {
-            const imgBuffer = (
-              await axios.get(shopCard.cardId.img, {
-                responseType: "arraybuffer",
-              })
-            ).data;
-            return sock.sendMessage(
-              chatId,
-              {
-                image: imgBuffer,
-                caption: cardMsg,
-              },
-              { quoted: message },
-            );
-          }
-        }
-        // Show all cards in shop
-        const sharp = require("sharp");
-
-        // Create base image (800x600) with white background
-        const cardWidth = 230;
-        const cardHeight = 300;
-        const padding = 10;
-        const columns = 3;
-        const rows = Math.ceil(shopCards.length / columns);
-
-        const background = await sharp({
-          create: {
-            width: columns * (cardWidth + padding) + padding,
-            height: rows * (cardHeight + padding) + padding,
-            channels: 4,
-            background: { r: 255, g: 255, b: 255, alpha: 1 },
-          },
-        }).png();
-
-        const composite = [];
-
-        // Loop through shop cards
-        for (let i = 0; i < shopCards.length; i++) {
-          const row = Math.floor(i / columns);
-          const col = i % columns;
-          const x = padding + col * (cardWidth + padding);
-          const y = padding + row * (cardHeight + padding);
-
-          const shopCard = shopCards[i];
-
-          try {
-            const cardImgResponse = await axios.get(shopCard.cardId.img, {
-              responseType: "arraybuffer",
-              timeout: 10000,
-            });
-
-            const resizedCard = await sharp(Buffer.from(cardImgResponse.data))
-              .resize(cardWidth, cardHeight, { fit: "cover" })
-              .png()
-              .toBuffer();
-
-            composite.push({ input: resizedCard, top: y, left: x });
-          } catch (cardError) {
-            console.error(
-              `Error loading card image for ${shopCard.cardId.name}:`,
-              cardError,
-            );
-
-            const errorSvg = `
-              <svg width="${cardWidth}" height="${cardHeight}">
-                <rect width="100%" height="100%" fill="#cccccc"/>
-                <text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="20" fill="black">Error</text>
-              </svg>
-            `;
-
-            const errorPlaceholder = await sharp(Buffer.from(errorSvg))
-              .png()
-              .toBuffer();
-
-            composite.push({ input: errorPlaceholder, top: y, left: x });
-          }
+            return sendCard(sock, chatId, message, card, caption);
         }
 
-        // Composite into one final image
-        const imageBuffer = await background
-          .composite(composite)
-          .png()
-          .toBuffer();
-
+        // grid
+        const imgBuffer = await createCardGrid(shopCards.map(s => s.cardId));
         const shopMsg = formatCardShopList(shopCards);
-
-        await sock.sendMessage(
-          chatId,
-          {
-            image: imageBuffer,
-            caption: shopMsg,
-          },
-          { quoted: message },
-        );
-      } catch (error) {
-        console.error("Cardshop error:", error);
-        await sock.sendMessage(
-          chatId,
-          { text: `❌ Error accessing card shop.` },
-          { quoted: message },
-        );
-      }
-    },
-  },
+        return sock.sendMessage(chatId, { image: imgBuffer, caption: shopMsg }, { quoted: message });
+    }
+},
 
   marketcard: {
     description: "Put a card from your collection on the market (Tier 4+ only)",
