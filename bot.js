@@ -72,7 +72,7 @@ class Bot {
                         await this.sock.sendMessage(
                             chatId,
                             {
-                                text: `💤 *${afkPlayer.name || u}* is currently AFK. \n📝 Message: "${afkPlayer.afkMessage}"`,
+                                text: `💤 *${afkPlayer.name || u}* is currently AFK. \n📝 Message: ${afkPlayer.afkMessage}`,
                             },
                             { quoted: message },
                         );
