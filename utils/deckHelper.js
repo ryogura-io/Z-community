@@ -2,10 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const sharp = require("sharp");
-
-const Player = require("../models/Player");
-const Card = require("../models/Card");
-const spawnManager = require("../spawnManager");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegStatic = require("ffmpeg-static");
 
