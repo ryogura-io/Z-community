@@ -11,4 +11,4 @@ const cardSchema = new mongoose.Schema({
   isEvent: Boolean
 });
 
-module.exports = mongoose.model("eCard", cardSchema, "eventCard");
+module.exports = mongoose.model("eCard", cardSchema, "eventCards");
