@@ -916,7 +916,11 @@ const cardCommands = {
             const card = player.deck[idx];
             if (!card) return sock.sendMessage(chatId, { text: "❌ No card at that position!" }, { quoted: message });
 
-            const caption = `📜 *Name:* ${card.name}\n⭐ *Tier:* ${card.tier}\n🎭 *Series:* ${card.series}\n👨‍🎨 *Maker:* ${card.maker}`;
+            const caption = `┌──「 *CARD DETAILS* 」\n\n` +
+                        `📜 *Name:* ${card.name}\n` +
+                        `⭐ *Tier:* ${card.tier}\n` +
+                        `🎭 *Series:* ${card.series}\n` +
+                        `👨‍🎨 *Maker:* ${card.maker}`;
             return sendCard(sock, chatId, message, card, caption);
         }
 
@@ -925,8 +929,22 @@ const cardCommands = {
             return sock.sendMessage(chatId, { text: "❌ Your deck is empty!" }, { quoted: message });
         }
 
+        const readMore = String.fromCharCode(8206).repeat(4001);
+                    let deckMsg = `🃏 *${player.name}'s Deck*\n\n${readMore}`;
+
+                    for (let i = 0; i < 12; i++) {
+                        const card = player.deck[i];
+                        if (card) {
+                            deckMsg +=
+                                `🎴 *${i + 1}.* *${card.name}*` +
+                                `\n        Series: ${card.series}` +
+                                `\n        Tier: ${card.tier}\n\n`;
+                        }
+                    }
+
+                    deckMsg += `\n💡 Use \`!deck <number>\` to see individual cards`;
         const imgBuffer = await createCardGrid(player.deck.filter(Boolean));
-        return sock.sendMessage(chatId, { image: imgBuffer, caption: `🃏 *${player.name}'s Deck*` }, { quoted: message });
+        return sock.sendMessage(chatId, { image: imgBuffer, caption: deckMsg }, { quoted: message });
     }
 }
 };
