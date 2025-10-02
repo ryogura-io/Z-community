@@ -1,5 +1,8 @@
 const Player = require("../models/Player");
 const mongoose = require("mongoose");
+const { removeItemFromInventory } = require("../utils/inventoryHelper");
+const Card = require("../models/Card");
+const axios = require("axios");
 
 const economyCommands = {
     economy: {
@@ -904,6 +907,122 @@ const economyCommands = {
             }
         },
     },
+    use : {
+    description: "Use an item from your inventory",
+    usage: "use <itemname>",
+    adminOnly: false,
+    execute: async ({ sender, chatId, sock, message, args }) => {
+        if (!args[0]) {
+            return sock.sendMessage(
+                chatId,
+                { text: "❌ Usage: !use <itemname>" },
+                { quoted: message }
+            );
+        }
+
+        const itemName = args.join(" ").toLowerCase();
+
+        try {
+            const player = await Player.findOne({ userId: sender }).populate("collection");
+            if (!player) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Please register first!" },
+                    { quoted: message }
+                );
+            }
+
+            // Check if player has the item
+            const inventoryItem = player.inventory.find(i => i.item.toLowerCase() === itemName);
+            if (!inventoryItem || inventoryItem.quantity <= 0) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: `❌ You don't have any ${itemName} in your inventory!` },
+                    { quoted: message }
+                );
+            }
+
+            // --- Handle common pack ---
+            if (itemName === "common pack") {
+                // Remove 1 pack from inventory
+                await removeItemFromInventory(sender, "common pack", 1);
+
+                // Determine tier (2% chance for Tier 5)
+                const tier = Math.random() < 0.02 ? "5" : "4";
+
+                // Get random card of that tier
+                const cards = await Card.find({ tier });
+                if (cards.length === 0) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: `❌ No Tier ${tier} cards available in the database!` },
+                        { quoted: message }
+                    );
+                }
+
+                const randomCard = cards[Math.floor(Math.random() * cards.length)];
+                player.collection.push(randomCard._id);
+
+                await player.save();
+
+                const cardDetails =
+                    `🎴 *Name:* ${randomCard.name}\n` +
+                    `🏷️ *Series:* ${randomCard.series}\n` +
+                    `⭐ *Tier:* ${randomCard.tier}\n` +
+                    `👨‍🎨 *Maker:* ${randomCard.maker}`;
+
+                const successMsg =
+                    `✅ *You used a Common Pack!*\n\n` +
+                    `🎁 You received a Tier ${tier} card!\n\n` +
+                    `${cardDetails}`;
+
+                // Send card image if exists
+                if (randomCard.img) {
+                    try {
+                        const response = await axios.get(randomCard.img, { responseType: "arraybuffer" });
+                        const imageBuffer = Buffer.from(response.data);
+
+                        await sock.sendMessage(
+                            chatId,
+                            { image: imageBuffer, caption: successMsg },
+                            { quoted: message }
+                        );
+                    } catch (imgError) {
+                        console.error("Error loading card image:", imgError);
+                        await sock.sendMessage(
+                            chatId,
+                            { text: successMsg },
+                            { quoted: message }
+                        );
+                    }
+                } else {
+                    await sock.sendMessage(
+                        chatId,
+                        { text: successMsg },
+                        { quoted: message }
+                    );
+                }
+
+                return;
+            }
+
+            // --- Add more items later ---
+            return sock.sendMessage(
+                chatId,
+                { text: `❌ The item "${itemName}" cannot be used yet.` },
+                { quoted: message }
+            );
+
+        } catch (err) {
+            console.error("Use item error:", err);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error using item." },
+                { quoted: message }
+            );
+        }
+    }
+},
 };
 
 module.exports = economyCommands;
