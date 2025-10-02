@@ -377,7 +377,7 @@ const coreCommands = {
                                 ? "🥉"
                                 : `${index + 1}.`;
 
-                    leaderboard += `${medal} *${player.name}* (Lvl ${player.level})\n`;
+                    leaderboard += `${medal} *${player.name}*\n`;
                     leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
                     leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
                     leaderboard += `   💰 Shards: ${player.shards}\n`;
