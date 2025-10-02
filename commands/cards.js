@@ -2,50 +2,10 @@ const Player = require("../models/Player");
 const Card = require("../models/Card");
 const axios = require("axios");
 const spawnManager = require("../spawnManager");
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegStatic = require("ffmpeg-static");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 const { sendCard, createCardGrid } = require("../utils/deckHelper");
-
-// Set FFmpeg path
-ffmpeg.setFfmpegPath(ffmpegStatic);
-
-// Helper function to convert media to MP4
-async function convertToMp4(inputBuffer, outputPath) {
-    return new Promise((resolve, reject) => {
-        const tempInputPath = path.join(
-            __dirname,
-            "..",
-            "temp_input_" + Date.now(),
-        );
-
-        // Write buffer to temporary file
-        fs.writeFileSync(tempInputPath, inputBuffer);
-
-        ffmpeg(tempInputPath)
-            .toFormat("mp4")
-            .videoCodec("libx264")
-            .audioCodec("aac")
-            .outputOptions([
-                "-movflags +faststart",
-                "-pix_fmt yuv420p",
-                "-vf scale=trunc(iw/2)*2:trunc(ih/2)*2", // Ensure even dimensions
-            ])
-            .on("end", () => {
-                fs.unlinkSync(tempInputPath); // Clean up temp input file
-                resolve();
-            })
-            .on("error", (err) => {
-                if (fs.existsSync(tempInputPath)) {
-                    fs.unlinkSync(tempInputPath); // Clean up on error
-                }
-                reject(err);
-            })
-            .save(outputPath);
-    });
-}
 
 const cardCommands = {
     claim: {
@@ -206,73 +166,7 @@ const cardCommands = {
                         `🎭 *Series:* ${card.series}\n` +
                         `👨‍🎨 *Maker:* ${card.maker}`;
 
-                    // Check if tier 6 or S card with video format
-                    if (
-                        (card.tier === "6" || card.tier === "S") &&
-                        (card.img.endsWith(".webm") ||
-                            card.img.endsWith(".gif"))
-                    ) {
-                        try {
-                            const mediaBuffer = (
-                                await axios.get(card.img, {
-                                    responseType: "arraybuffer",
-                                })
-                            ).data;
-                            const outputPath = path.join(
-                                __dirname,
-                                "..",
-                                `temp_output_${Date.now()}.mp4`,
-                            );
-
-                            await convertToMp4(mediaBuffer, outputPath);
-                            const videoBuffer = fs.readFileSync(outputPath);
-                            fs.unlinkSync(outputPath); // Clean up
-
-                            await sock.sendMessage(
-                                chatId,
-                                {
-                                    video: videoBuffer,
-                                    caption: cardMsg,
-                                    mimetype: "video/mp4",
-                                    gifPlayback: true,
-                                },
-                                { quoted: message },
-                            );
-                        } catch (conversionError) {
-                            console.error(
-                                "Video conversion error:",
-                                conversionError,
-                            );
-                            // Fallback to sending as image
-                            const imgBuffer = (
-                                await axios.get(card.img, {
-                                    responseType: "arraybuffer",
-                                })
-                            ).data;
-                            await sock.sendMessage(
-                                chatId,
-                                {
-                                    image: imgBuffer,
-                                    caption: cardMsg,
-                                },
-                                { quoted: message },
-                            );
-                        }
-                    } else {
-                        const imgBuffer = (
-                            await axios.get(card.img, {
-                                responseType: "arraybuffer",
-                            })
-                        ).data;
-                        await sock.sendMessage(
-                            chatId,
-                            {
-                                image: imgBuffer,
-                                caption: cardMsg,
-                            },
-                            { quoted: message },
-                        );
-                    }
+                    return sendCard(sock, chatId, message, card, cardMsg)
                 } else {
                     const totalCards = player.collection.length;
                     if (totalCards === 0) {
