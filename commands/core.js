@@ -776,7 +776,7 @@ const coreCommands = {
             // Assign to player
             await Player.findOneAndUpdate(
                 { userId: sender },
-                { character: character.id },
+                { characterID: character.id, characterName: character.name },
                 { new: true, upsert: true },
             );
 
