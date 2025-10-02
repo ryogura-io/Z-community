@@ -216,54 +216,58 @@ const coreCommands = {
     },
 
     inventory: {
-        description: "Show your complete inventory",
-        usage: "inventory",
-        aliases: ["inv"],
-        adminOnly: false,
-        execute: async ({ sender, chatId, bot, sock, message }) => {
-            try {
-                const player = await Player.findOne({
-                    userId: sender,
-                }).populate("collection deck familiaId");
-                if (!player) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: "❌ Please register first!" },
-                        { quoted: message },
-                    );
-                }
-
-                const totalCards = player.collection.length;
-                const deckCards = player.deck.filter(
-                    (card) => card !== null,
-                ).length;
-
-                const msg =
-                    `🎒 *${player.name}'s INVENTORY*\n\n` +
-                    `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
-                    `💎 *Crystals:* ${player.crystals.toLocaleString()}\n` +
-                    `🏦 *Vault:* ${player.vault.toLocaleString()}\n` +
-                    `🎴 *Total Cards:* ${totalCards}\n` +
-                    `🃏 *Cards in Deck:* ${deckCards}/12\n` +
-                    `📊 *Level:* ${player.level}\n` +
-                    `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
-                    `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}`;
-
-                await sock.sendMessage(
+    description: "Show your complete inventory",
+    usage: "inventory",
+    aliases: ["inv"],
+    adminOnly: false,
+    execute: async ({ sender, chatId, bot, sock, message }) => {
+        try {
+            const player = await Player.findOne({
+                userId: sender,
+            }).populate("collection deck familiaId");
+            if (!player) {
+                return sock.sendMessage(
                     chatId,
-                    { text: msg },
-                    { quoted: message },
-                );
-            } catch (error) {
-                console.error("Inventory error:", error);
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Error fetching inventory." },
-                    { quoted: message },
+                    { text: "❌ Please register first!" },
+                    { quoted: message }
                 );
             }
-        },
+
+            const totalCards = player.collection.length;
+            const deckCards = player.deck.filter((card) => card !== null).length;
+
+            // --- Build items section ---
+            let itemsMsg = "📦 *Items:* None";
+            if (player.inventory && player.inventory.length > 0) {
+                const ownedItems = player.inventory
+                    .filter((i) => i.quantity > 0)
+                    .map((i) => `${i.item} x${i.quantity}`);
+                if (ownedItems.length > 0) itemsMsg = `📦 *Items:*\n- ${ownedItems.join("\n- ")}`;
+            }
+
+            const msg =
+                `🎒 *${player.name}'s INVENTORY*\n\n` +
+                `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
+                `💎 *Crystals:* ${player.crystals.toLocaleString()}\n` +
+                `🏦 *Vault:* ${player.vault.toLocaleString()}\n` +
+                `🎴 *Total Cards:* ${totalCards}\n` +
+                `🃏 *Cards in Deck:* ${deckCards}/12\n` +
+                `📊 *Level:* ${player.level}\n` +
+                `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
+                `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n\n` +
+                itemsMsg;
+
+            await sock.sendMessage(chatId, { text: msg }, { quoted: message });
+        } catch (error) {
+            console.error("Inventory error:", error);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error fetching inventory." },
+                { quoted: message }
+            );
+        }
     },
+},
 
     leaderboard: {
         description: "Show leaderboards",
@@ -614,7 +618,7 @@ const coreCommands = {
                     `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n` +
                     `🎮 *Game Wins:* ${player.gameWins || 0}\n` +
                     `📝 *Bio:* ${player.bio || "No bio set"}\n` +
-                    `🎭 *Character:* ${player.character || "Not set"}`;
+                    `🎭 *Character:* ${player.characterName || "Not set"}`;
 
                 await sock.sendMessage(
                     chatId,
