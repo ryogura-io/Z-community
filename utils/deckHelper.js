@@ -2,8 +2,51 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const sharp = require("sharp");
-const { convertToMp4 } = require("./mediaHelper"); // your existing ffmpeg util
 
+const Player = require("../models/Player");
+const Card = require("../models/Card");
+const spawnManager = require("../spawnManager");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegStatic = require("ffmpeg-static");
+
+
+// Set FFmpeg path
+ffmpeg.setFfmpegPath(ffmpegStatic);
+
+// Helper function to convert media to MP4
+async function convertToMp4(inputBuffer, outputPath) {
+    return new Promise((resolve, reject) => {
+        const tempInputPath = path.join(
+            __dirname,
+            "..",
+            "temp_input_" + Date.now(),
+        );
+
+        // Write buffer to temporary file
+        fs.writeFileSync(tempInputPath, inputBuffer);
+
+        ffmpeg(tempInputPath)
+            .toFormat("mp4")
+            .videoCodec("libx264")
+            .audioCodec("aac")
+            .outputOptions([
+                "-movflags +faststart",
+                "-pix_fmt yuv420p",
+                "-vf scale=trunc(iw/2)*2:trunc(ih/2)*2", // Ensure even dimensions
+            ])
+            .on("end", () => {
+                fs.unlinkSync(tempInputPath); // Clean up temp input file
+                resolve();
+            })
+            .on("error", (err) => {
+                if (fs.existsSync(tempInputPath)) {
+                    fs.unlinkSync(tempInputPath); // Clean up on error
+                }
+                reject(err);
+            })
+            .save(outputPath);
+    });
+}
 /**
  * Send a single card (handles images, gifs, webm with fallback).
  */
