@@ -864,6 +864,100 @@ const moderatorCommands = {
             }
         },
     },
+
+    addecard: {
+    description: "Add an event card to the eDeck using its URL",
+    usage: "addecard <url>",
+    aliases: ["addeck"],
+    adminOnly: true, // restrict to owners/mods
+    execute: async ({ sender, chatId, sock, message, args }) => {
+        if (!args[0]) {
+            return sock.sendMessage(
+                chatId,
+                { text: "❌ Usage: !addecard <url>" },
+                { quoted: message }
+            );
+        }
+
+        try {
+            const url = args[0];
+            const eCard = await require("../models/eCard").findOne({ url });
+
+            if (!eCard) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Event card not found with that URL!" },
+                    { quoted: message }
+                );
+            }
+
+            const Config = require("../models/Config");
+            let config = await Config.findOne({});
+            if (!config) {
+                config = new Config();
+            }
+
+            // Prevent duplicates
+            if (config.eDeck.includes(eCard._id)) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ This card is already in the eDeck!" },
+                    { quoted: message }
+                );
+            }
+
+            config.eDeck.push(eCard._id);
+            await config.save();
+
+            return sock.sendMessage(
+                chatId,
+                { text: `✅ Added *${eCard.name}* to the eDeck!` },
+                { quoted: message }
+            );
+        } catch (error) {
+            console.error("Add eCard error:", error);
+            return sock.sendMessage(
+                chatId,
+                { text: "❌ Error adding event card to eDeck." },
+                { quoted: message }
+            );
+        }
+    },
+},
+
+    edeck: {
+    description: "Show the eDeck of event cards",
+    usage: "edeck",
+    aliases: ["eventdeck"],
+    adminOnly: false,
+    execute: async ({ chatId, sock, message }) => {
+        try {
+            const Config = require("../models/Config");
+            const config = await Config.findOne({}).populate("eDeck");
+
+            if (!config || !config.eDeck || config.eDeck.length === 0) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "📭 The eDeck is empty!" },
+                    { quoted: message }
+                );
+            }
+
+            // Use your deckHelper function to send the eDeck
+            const deckHelper = require("../utils/deckHelper");
+            await deckHelper.sendDeck(sock, chatId, message, config.eDeck);
+
+        } catch (error) {
+            console.error("eDeck error:", error);
+            return sock.sendMessage(
+                chatId,
+                { text: "❌ Error displaying eDeck." },
+                { quoted: message }
+            );
+        }
+    },
+},
+
 };
 
 module.exports = moderatorCommands;
