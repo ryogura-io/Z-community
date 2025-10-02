@@ -32,7 +32,7 @@ const playerSchema = new mongoose.Schema({
             item: { type: String, required: true }, // e.g., "common pack"
             quantity: { type: Number, default: 0 }, // how many the player owns
         }
-    ]
+    ],
 
   // Status & Settings
   isModerator: { type: Boolean, default: false },
