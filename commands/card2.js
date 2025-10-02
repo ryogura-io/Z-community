@@ -80,7 +80,7 @@ module.exports = {
             `⏰ *Time Left:* ${timeLeft} hours\n` +
             `🔑 *Purchase captcha:* ${shopCard.purchaseCaptcha}\n\n` +
             `💡 Use \`!purchase ${shopCard.purchaseCaptcha}\` to buy`;
-            return sendCard(sock, chatId, message, card, caption);
+            return sendCard(sock, chatId, message, shopCard.cardId, caption);
         }
 
         // grid
