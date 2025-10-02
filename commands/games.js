@@ -186,7 +186,7 @@ const gameCommands = {
                         await sock.sendMessage(
                             chatId,
                             {
-                                text: `⏰ Time's up! The answer wasn't guessed in 15s.`,
+                                text: `⏰ Time's up! The answer wasn't guessed in 15s.\nThe answer was *${game.answer}*`,
                                 mentions: [sender],
                             },
                             { quoted: message },
@@ -379,7 +379,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                             await sock.sendMessage(
                                 chatId,
                                 {
-                                    text: "⏰ Time's up! The Pokémon wasn't guessed in 15s.",
+                                    text: `⏰ Time's up! The Pokémon wasn't guessed in 15s.\nThe answer was *${game.answer}*`,
                                     mentions: [sender],
                                 },
                                 { quoted: message },
@@ -452,7 +452,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                         await sock.sendMessage(
                             chatId,
                             {
-                                text: `⏰ Time's up! The word wasn't guessed right after 45 seconds.`,
+                                text: `⏰ Time's up! The word wasn't guessed right after 45 seconds.\nThe answer was *${game.answer}*`,
                                 mentions: [sender],
                             },
                             { quoted: message },
