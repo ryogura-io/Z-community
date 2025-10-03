@@ -663,13 +663,9 @@ const cardCommands = {
                 }
 
                 let searchMsg = `🔍 *Search Results for "${searchTerm}" (${foundCards.length})*\n\n`;
-                foundCards.slice(0, 10).forEach((card, index) => {
+                foundCards.forEach((card, index) => {
                     searchMsg += `*${index + 1}. ${card.name}* (Tier ${card.tier})\n    Location: ${card.location}\n`;
                 });
-
-                if (foundCards.length > 10) {
-                    searchMsg += `\n... and ${foundCards.length - 10} more matches`;
-                }
 
                 await sock.sendMessage(
                     chatId,
