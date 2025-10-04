@@ -108,7 +108,7 @@ const cardCommands = {
                 const {
                     addItemToInventory,
                 } = require("../utils/inventoryHelper");
-                if (Math.random() <= 1) {
+                if (Math.random() <= 0.03) {
                     await addItemToInventory(sender, "event slip", 1);
                     await sock.sendMessage(
                         chatId,
