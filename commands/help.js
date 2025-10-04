@@ -87,6 +87,24 @@ const categoryMap = {
             "withdraw",
         ],
     },
+    reaction: {
+        title: "🙂 Reaction",
+        commands: [
+            "bully",
+    "cuddle",
+    "cry",
+    "hug",
+    "kiss",
+    "pat",
+    "bonk",
+    "blush",
+    "bite",
+    "slap",
+    "kill",
+    "kick",
+    "dance",
+        ],
+    },
     familia: {
         title: "👨‍👩‍👧‍👦 Familia",
         commands: [
@@ -138,6 +156,7 @@ const categoryMap = {
             "add",
             "close",
             "open",
+            "delete",
             "tag",
             "tagall",
             "admins",
@@ -279,7 +298,7 @@ const helpCommand = {
         adminOnly: true,
         execute: async (context) => {
             const { chatId, sock, message } = context;
-            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout, stop, show, addecard,
+            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout, stop, show, addecard, setseries, 
             \n\n👑 *Owner* \n• mode, setpp, addsudo, delsudo, set`
             await sock.sendMessage(chatId, { text: adminMenu }, {quoted: message});
             
