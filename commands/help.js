@@ -62,6 +62,14 @@ const categoryMap = {
             "profile",
         ],
     },
+    event: {
+        title: "🎃 Event",
+        commands: [
+            "edeck",
+            "epull",
+            "events",
+        ],
+    },
     economy: {
         title: "💲 Economy",
         commands: [
