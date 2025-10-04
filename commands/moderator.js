@@ -381,34 +381,41 @@ const moderatorCommands = {
                 );
 
                 // Auto-disable after 5 minutes if still enabled
-            setTimeout(async () => {
-                try {
-                    const updatedFamilia = await Familia.findById(familia._id);
-                    const updatedGroup = await Group.findOne({ groupId: chatId });
+                setTimeout(
+                    async () => {
+                        try {
+                            const updatedFamilia = await Familia.findById(
+                                familia._id,
+                            );
+                            const updatedGroup = await Group.findOne({
+                                groupId: chatId,
+                            });
 
-                    if (updatedFamilia?.slot === "enabled") {
-                        updatedFamilia.slot = "disabled";
-                        await updatedFamilia.save();
-                    }
+                            if (updatedFamilia?.slot === "enabled") {
+                                updatedFamilia.slot = "disabled";
+                                await updatedFamilia.save();
+                            }
 
-                    if (updatedGroup?.slot === "enabled") {
-                        updatedGroup.slot = "disabled";
-                        await updatedGroup.save();
-                    }
+                            if (updatedGroup?.slot === "enabled") {
+                                updatedGroup.slot = "disabled";
+                                await updatedGroup.save();
+                            }
 
-                    // Notify group if they were still open
-                    if (
-                        updatedFamilia?.slot === "disabled" ||
-                        updatedGroup?.slot === "disabled"
-                    ) {
-                        await sock.sendMessage(chatId, {
-                            text: `⏰ Slots for familia *${familiaName}* have been automatically closed after 5 minutes.`,
-                        });
-                    }
-                } catch (err) {
-                    console.error("Auto disable slot error:", err);
-                }
-            }, 5 * 60 * 1000); // 5 minutes
+                            // Notify group if they were still open
+                            if (
+                                updatedFamilia?.slot === "disabled" ||
+                                updatedGroup?.slot === "disabled"
+                            ) {
+                                await sock.sendMessage(chatId, {
+                                    text: `⏰ Slots for familia *${familiaName}* have been automatically closed after 5 minutes.`,
+                                });
+                            }
+                        } catch (err) {
+                            console.error("Auto disable slot error:", err);
+                        }
+                    },
+                    5 * 60 * 1000,
+                ); // 5 minutes
             } catch (error) {
                 console.error("StartSlot error:", error);
                 await sock.sendMessage(
@@ -985,8 +992,10 @@ const moderatorCommands = {
 
                     const card = deck[idx];
                     const caption =
-                        `┌──「 *CARD DETAILS* 」\n\n` +
+                        `┌──「 *EVENT CARD DETAILS* 」\n\n` +
                         `📜 *Name:* ${card.name}\n` +
+                        `🎭 *Series:* ${card.series}\n` +
+                        `🎀 *Event:* ${card.event}\n` +
                         `⭐ *Tier:* ${card.tier}\n` +
                         `👨‍🎨 *Maker:* ${card.maker}`;
 
@@ -1007,9 +1016,9 @@ const moderatorCommands = {
                 const readMore = String.fromCharCode(8206).repeat(4001);
                 let deckMsg = `🃏 *Event Deck*\n\n${readMore}`;
 
-deck.forEach((card, i) => {
+                deck.forEach((card, i) => {
                     if (card) {
-                        deckMsg += `🎴 *${i + 1}.* ${card.name}\n     Event: ${card.event}\n     Tier: ${card.tier}\n\n`;
+                        deckMsg += `🎴 *${i + 1}.* ${card.name}\n     Series: ${card.series}\n     Tier: ${card.tier}\n\n`;
                     }
                 });
 
@@ -1037,13 +1046,15 @@ deck.forEach((card, i) => {
         adminOnly: true,
         execute: async ({ chatId, sock, message, args }) => {
             const Config = require("../models/Config");
-const eCard = require("../models/eCard");
+            const eCard = require("../models/eCard");
             try {
                 // Check args
                 if (args.length < 2) {
                     return sock.sendMessage(
                         chatId,
-                        { text: "❌ Usage: !setseries <edeck_index> <new_series_name>" },
+                        {
+                            text: "❌ Usage: !setseries <edeck_index> <new_series_name>",
+                        },
                         { quoted: message },
                     );
                 }
@@ -1054,7 +1065,9 @@ const eCard = require("../models/eCard");
                 if (isNaN(index) || index < 0) {
                     return sock.sendMessage(
                         chatId,
-                        { text: "⚠️ Please provide a valid eDeck index number." },
+                        {
+                            text: "⚠️ Please provide a valid eDeck index number.",
+                        },
                         { quoted: message },
                     );
                 }
@@ -1064,7 +1077,9 @@ const eCard = require("../models/eCard");
                 if (!config || !config.eDeck || !config.eDeck[index]) {
                     return sock.sendMessage(
                         chatId,
-                        { text: "❌ No card found at that index in the eDeck." },
+                        {
+                            text: "❌ No card found at that index in the eDeck.",
+                        },
                         { quoted: message },
                     );
                 }
@@ -1075,7 +1090,7 @@ const eCard = require("../models/eCard");
                 await eCard.findByIdAndUpdate(
                     card._id,
                     { $set: { series: newSeries } },
-                    { new: true }
+                    { new: true },
                 );
 
                 await sock.sendMessage(
