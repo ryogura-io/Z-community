@@ -104,11 +104,11 @@ const cardCommands = {
                     );
                 }
 
-                // 🎟️ 3% chance to get Event Slip
+                // 🎟️ 6% chance to get Event Slip
                 const {
                     addItemToInventory,
                 } = require("../utils/inventoryHelper");
-                if (Math.random() <= 0.03) {
+                if (Math.random() <= 0.06) {
                     await addItemToInventory(sender, "event slip", 1);
                     await sock.sendMessage(
                         chatId,
