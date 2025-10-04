@@ -1036,6 +1036,8 @@ deck.forEach((card, i) => {
         usage: "setseries <edeck_index> <new_series_name>",
         adminOnly: true,
         execute: async ({ chatId, sock, message, args }) => {
+            const Config = require("../models/Config");
+const eCard = require("../models/eCard");
             try {
                 // Check args
                 if (args.length < 2) {
