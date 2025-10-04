@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ecardSchema = new mongoose.Schema({
+const cardSchema = new mongoose.Schema({
   name: String,
   tier: String, 
   series: String,
@@ -11,4 +11,5 @@ const ecardSchema = new mongoose.Schema({
   isEvent: { type: Boolean, default: false },
 });
 
-module.exports = mongoose.model("eCard", ecardSchema, "eventCards");
+module.exports = mongoose.model("Card", cardSchema, "cards");
+
