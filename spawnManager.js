@@ -63,10 +63,10 @@ const tierConfig = {
     1: { weight: 45, price: 100 },
     2: { weight: 26, price: 250 },
     3: { weight: 17, price: 500 },
-    4: { weight: 10, price: 1000 },
+    4: { weight: 10.2, price: 1000 },
     5: { weight: 1.5, price: 2000 },
-    6: { weight: 0.4, price: 5000 },
-    S: { weight: 0.1, price: 10000 },
+    6: { weight: 0.3, price: 5000 },
+    S: { weight: 0, price: 10000 },
 };
 
 // Get weighted random card based on tier spawn rates
