@@ -69,7 +69,7 @@ const tierConfig = {
     S: { weight: 0, price: 10000 },
 };
 
-// Get weighted random card based on tier spawn rates
+// Get weighted random card based on tier spawn rates (exclude event cards)
 async function getRandomCard() {
     try {
         // Get total weight
@@ -89,23 +89,24 @@ async function getRandomCard() {
             }
         }
 
-        // Count cards in selected tier
-        const count = await Card.countDocuments({ tier: selectedTier });
+        // Count non-event cards in selected tier
+        const count = await Card.countDocuments({ tier: selectedTier, event: { $ne: true } });
         if (count === 0) {
-            // Fallback: pick a completely random card
-            const totalCards = await Card.countDocuments();
+            // Fallback: pick a completely random non-event card
+            const totalCards = await Card.countDocuments({ event: { $ne: true } });
             const randomIndex = Math.floor(Math.random() * totalCards);
-            return await Card.findOne().skip(randomIndex);
+            return await Card.findOne({ event: { $ne: true } }).skip(randomIndex);
         }
 
-        // Pick random card from selected tier
+        // Pick random non-event card from selected tier
         const randomIndex = Math.floor(Math.random() * count);
-        return await Card.findOne({ tier: selectedTier }).skip(randomIndex);
+        return await Card.findOne({ tier: selectedTier, event: { $ne: true } }).skip(randomIndex);
     } catch (error) {
         console.error("Error getting random card:", error);
         return null;
     }
 }
+
 
 // Check if group meets spawn requirements
 async function canSpawnInGroup(sock, groupId) {
