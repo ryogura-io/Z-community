@@ -189,7 +189,7 @@ const coreCommands = {
                 }
 
                 const expForNext = player.level * 1000; // Simple leveling system
-                const currentExp = player.exp % 1000;
+                const currentExp = player.exp % (1000 * player.level);
 
                 const msg =
                     `🏆 *RANK INFO*\n\n` +
