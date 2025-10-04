@@ -11,6 +11,7 @@ const economyCommands = require('./economy');
 const familiaCommands = require('./familia');
 const coreCommands = require('./core');
 const moderatorCommands = require('./moderator');
+const reactionCommands = require('./reactions');
 
 // Combine all commands
 const rawCommands = {
@@ -27,6 +28,7 @@ const rawCommands = {
     ...familiaCommands,
     ...coreCommands,
     ...moderatorCommands,
+    ...reactionCommands,
 };
 
 const commands = {};
