@@ -527,7 +527,7 @@ const groupCommands = {
     adminOnly: false,
     execute: async (context) => {
         const { chatId, isGroup, sock, sender, message, args } = context;
-        const permissions = require("../helpers/permissions");
+        const permissions = require("../utils/permissions");
 
         if (!isGroup) {
             return sock.sendMessage(chatId, { text: "❌ This command can only be used in groups." }, { quoted: message });
@@ -572,7 +572,7 @@ open: {
     adminOnly: false,
     execute: async (context) => {
         const { chatId, isGroup, sock, sender, message, args } = context;
-        const permissions = require("../helpers/permissions");
+        const permissions = require("../utils/permissions");
 
         if (!isGroup) {
             return sock.sendMessage(chatId, { text: "❌ This command can only be used in groups." }, { quoted: message });
