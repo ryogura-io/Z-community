@@ -106,8 +106,8 @@ const eventCommands = {
             `┌──「 *EVENT CARD DETAILS* 」\n\n` +
             `📜 *Name:* ${card.name}\n` +
             `🎭 *Series:* ${card.series}\n` +
-            `🎀 *Event:* ${card.event}\n` +
             `⭐ *Tier:* ${card.tier}\n` +
+            `🎀 *Event:* ${card.event}\n` +
             `👨‍🎨 *Maker:* ${card.maker}`;
 
           return deckHelper.sendCard(sock, chatId, message, card, caption);
@@ -191,7 +191,7 @@ const eventCommands = {
               player.collection.push(card._id);
               config.eDeck.splice(randomIndex, 1);
               await config.save();
-              resultText = `🌟 You pulled an *Event Card!* 🎴\n*${card.name}* (Tier ${card.tier})`;
+              resultText = `👑 You pulled an *Event Card!* \n~> *${card.name}* _from_ ${card.series}`;
             }
           }
         } else if (roll < 3) {
@@ -201,11 +201,11 @@ const eventCommands = {
             const randomCard =
               t5Cards[Math.floor(Math.random() * t5Cards.length)];
             player.collection.push(randomCard._id);
-            resultText = `✨ You pulled a *Tier 5 Card!* \n🎴 *Name:*: *${randomCard.name}* \n⭐ *Tier:*: *${randomCard.tier}*`;
+            resultText = `✨ You pulled a *Tier 5 Card!* \n~> *${randomCard.name}* _from_ ${randomCard.series}`;
           } else {
             resultText = "⚠️ No Tier 5 cards found in the DB!";
           }
-        } else if (roll < 5) {
+        } else if (roll < 7) {
           // 3% - 30 Crystals
           player.crystals += 20;
           resultText = "💎 You received *20 Crystals!*";
@@ -298,6 +298,86 @@ const eventCommands = {
         await sock.sendMessage(
           chatId,
           { text: "❌ Failed to update card series." },
+          { quoted: message },
+        );
+      }
+    },
+  },
+
+  events: {
+    description: "Display all event cards in your collection, sorted by tier",
+    usage: "events",
+    adminOnly: false,
+    execute: async ({ sender, chatId, args, bot, sock, message }) => {
+      try {
+        const player = await Player.findOne({ userId: sender })
+          .populate("collection")
+          .populate("deck");
+
+        if (!player) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Please register first!" },
+            { quoted: message },
+          );
+        }
+
+        // Merge collection + deck
+        let allCards = [...player.collection, ...player.deck];
+
+        if (allCards.length === 0) {
+          return sock.sendMessage(
+            chatId,
+            { text: "📦 Your collection is empty!" },
+            { quoted: message },
+          );
+        }
+
+        // Filter event cards
+        let eventCards = allCards.filter((card) => card.isEvent === true);
+
+        if (eventCards.length === 0) {
+          return sock.sendMessage(
+            chatId,
+            { text: "🎃 You don’t have any event cards yet!" },
+            { quoted: message },
+          );
+        }
+
+        // Define tier order (descending)
+        const tierOrder = ["S", "6", "5", "4", "3", "2", "1"];
+
+        // Group cards by tier
+        const grouped = {};
+        for (const t of tierOrder) grouped[t] = [];
+        eventCards.forEach((card) => {
+          if (grouped[card.tier]) grouped[card.tier].push(card);
+        });
+
+        // Build message
+        let eventsMsg = `🎴 *${player.name}'s Event Cards* (${eventCards.length} cards)\n\n`;
+
+        for (const tier of tierOrder) {
+          const tierCards = grouped[tier];
+          if (tierCards.length === 0) continue;
+
+          eventsMsg += `⭐ *Tier ${tier}* (${tierCards.length})\n`;
+          tierCards.forEach((card, idx) => {
+            eventsMsg += `   ${idx + 1}. ${card.name}\n`;
+          });
+          eventsMsg += `\n`;
+        }
+
+        await sock.sendMessage(
+          chatId,
+          { text: eventsMsg.trim() },
+          { quoted: message },
+        );
+      } catch (error) {
+        console.error("Events error:", error);
+        await sock.sendMessage(
+          chatId,
+          { text: "❌ Error fetching event cards." },
           { quoted: message },
         );
       }
