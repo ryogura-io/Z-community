@@ -12,7 +12,7 @@ const cardShopSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 1 }, // Price in shards
     purchaseCaptcha: { type: String, required: true }, // Random captcha for purchase
     listedAt: { type: Date, default: Date.now }, // When the card was listed
-    expiresAt: { type: Date, required: true }, // 6 hours from listing
+    expiresAt: { type: Date, required: true, index: false }, // 6 hours from listing
   },
   {
     timestamps: true,
