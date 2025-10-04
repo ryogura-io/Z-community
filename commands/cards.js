@@ -9,128 +9,141 @@ const { sendCard, createCardGrid } = require("../utils/deckHelper");
 
 const cardCommands = {
     claim: {
-    description: "Claim the currently spawned card using captcha",
-    usage: "claim <captcha>",
-    aliases: ["c"],
-    adminOnly: false,
-    execute: async ({
-        sender,
-        chatId,
-        args,
-        bot,
-        sock,
-        msgQueue,
-        message,
-    }) => {
-        if (!args[0]) {
-            return sock.sendMessage(
-                chatId,
-                { text: "❌ Usage: !claim <captcha>" },
-                { quoted: message },
-            );
-        }
-
-        try {
-            const activeSpawn = spawnManager.getActiveSpawn(chatId);
-            if (!activeSpawn) {
+        description: "Claim the currently spawned card using captcha",
+        usage: "claim <captcha>",
+        aliases: ["c"],
+        adminOnly: false,
+        execute: async ({
+            sender,
+            chatId,
+            args,
+            bot,
+            sock,
+            msgQueue,
+            message,
+        }) => {
+            if (!args[0]) {
                 return sock.sendMessage(
                     chatId,
-                    { text: "❌ No active card spawn in this group!" },
+                    { text: "❌ Usage: !claim <captcha>" },
                     { quoted: message },
                 );
             }
 
-            if (args[0].toUpperCase() !== activeSpawn.captcha.toUpperCase()) {
-                return sock.sendMessage(
-                    chatId,
-                    { text: "❌ Incorrect captcha!" },
-                    { quoted: message },
+            try {
+                const activeSpawn = spawnManager.getActiveSpawn(chatId);
+                if (!activeSpawn) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "❌ No active card spawn in this group!" },
+                        { quoted: message },
+                    );
+                }
+
+                if (
+                    args[0].toUpperCase() !== activeSpawn.captcha.toUpperCase()
+                ) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "❌ Incorrect captcha!" },
+                        { quoted: message },
+                    );
+                }
+
+                let player = await Player.findOne({ userId: sender });
+                if (!player) {
+                    return sock.sendMessage(
+                        chatId,
+                        {
+                            text: "❌ Please register first using !register <name>",
+                        },
+                        { quoted: message },
+                    );
+                }
+
+                // ✅ Check shards
+                const cardPrice =
+                    spawnManager.tierConfig[activeSpawn.card.tier]?.price ||
+                    100;
+                if (player.shards < cardPrice) {
+                    return sock.sendMessage(
+                        chatId,
+                        {
+                            text: `❌ You need *${cardPrice} shards* to claim this card!\n💰 Your shards: ${player.shards}`,
+                        },
+                        { quoted: message },
+                    );
+                }
+
+                // Deduct shards
+                player.shards -= cardPrice;
+
+                // Find empty deck slot or add to collection
+                player = await Player.findById(player._id); // reload fresh copy
+                const emptySlot = player.deck.findIndex(
+                    (slot) => slot === null,
                 );
-            }
+                if (emptySlot !== -1) {
+                    player.deck[emptySlot] = activeSpawn.card._id;
+                } else {
+                    player.collection.push(activeSpawn.card._id);
+                }
 
-            let player = await Player.findOne({ userId: sender });
-            if (!player) {
-                return sock.sendMessage(
-                    chatId,
-                    {
-                        text: "❌ Please register first using !register <name>",
-                    },
-                    { quoted: message },
-                );
-            }
+                // 🎲 Probability-based shard reward
+                const rewardChance = 0.1; // 10% chance to get 2000 shards
+                let rewardShards = 0;
+                if (Math.random() <= rewardChance) {
+                    rewardShards = 2000;
+                    player.shards += rewardShards;
+                    const bonusMsg = `💰 Congratulations, you successfully won 2000 bonus shards`;
+                    await sock.sendMessage(
+                        chatId,
+                        { text: bonusMsg },
+                        { quoted: message },
+                    );
+                }
 
-            // ✅ Check shards
-            const cardPrice =
-                spawnManager.tierConfig[activeSpawn.card.tier]?.price || 100;
-            if (player.shards < cardPrice) {
-                return sock.sendMessage(
-                    chatId,
-                    {
-                        text: `❌ You need *${cardPrice} shards* to claim this card!\n💰 Your shards: ${player.shards}`,
-                    },
-                    { quoted: message },
-                );
-            }
+                // 🎟️ 3% chance to get Event Slip
+                const {
+                    addItemToInventory,
+                } = require("../utils/inventoryHelper");
+                if (Math.random() <= 0.03) {
+                    await addItemToInventory(sender, "event slip", 1);
+                    await sock.sendMessage(
+                        chatId,
+                        {
+                            text: "🎟️ Lucky find! You obtained *1 Event Slip*!",
+                        },
+                        { quoted: message },
+                    );
+                }
 
-            // Deduct shards
-            player.shards -= cardPrice;
+                player.exp += 20;
+                await player.save();
 
-            // Find empty deck slot or add to collection
-            const emptySlot = player.deck.findIndex((slot) => slot === null);
-            if (emptySlot !== -1) {
-                player.deck[emptySlot] = activeSpawn.card._id;
-            } else {
-                player.collection.push(activeSpawn.card._id);
-            }
+                spawnManager.removeActiveSpawn(chatId);
 
-            // 🎲 10% chance to get 2000 shards
-            const rewardChance = 0.1;
-            if (Math.random() <= rewardChance) {
-                player.shards += 2000;
+                // ✅ Now define claimMsg BEFORE sending
+                const claimMsg =
+                    `🎉 *Card claimed by ${player.name}!*\n\n` +
+                    `🎴 Card: *${activeSpawn.card.name}* [Tier ${activeSpawn.card.tier}] \n` +
+                    `🎯 Added to: ${emptySlot !== -1 ? `Deck slot ${emptySlot + 1}` : "Collection"}\n`;
+
                 await sock.sendMessage(
                     chatId,
-                    { text: "💰 Congratulations, you won 2000 bonus shards!" },
+                    { text: claimMsg },
                     { quoted: message },
                 );
-            }
-
-            // 🎟️ 3% chance to get Event Slip
-            const { addItemToInventory } = require("../utils/inventoryHelper");
-            if (Math.random() <= 0.03) {
-                await addItemToInventory(sender, "event slip", 1);
+            } catch (error) {
+                console.error("Claim error:", error);
                 await sock.sendMessage(
                     chatId,
-                    { text: "🎟️ Lucky find! You obtained **1 Event Slip**!" },
+                    { text: "❌ Error claiming card." },
                     { quoted: message },
                 );
             }
-
-            player.exp += 50;
-            await player.save();
-
-            spawnManager.removeActiveSpawn(chatId);
-
-            // ✅ Send claim summary
-            const claimMsg =
-                `🎉 *Card claimed by ${player.name}!*\n\n` +
-                `🎴 Card: *${activeSpawn.card.name}* [Tier ${activeSpawn.card.tier}] \n` +
-                `🎯 Added to: ${
-                    emptySlot !== -1
-                        ? `Deck slot ${emptySlot + 1}`
-                        : "Collection"
-                }\n`;
-
-            await sock.sendMessage(chatId, { text: claimMsg }, { quoted: message });
-        } catch (error) {
-            console.error("Claim error:", error);
-            await sock.sendMessage(
-                chatId,
-                { text: "❌ Error claiming card." },
-                { quoted: message },
-            );
-        }
+        },
     },
-},
 
     collection: {
         description: "Display user cards collection in numerical order",
