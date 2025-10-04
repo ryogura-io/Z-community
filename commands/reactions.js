@@ -55,8 +55,8 @@ reactions.forEach((reaction) => {
 
                 // Caption text
                 const caption = mentioned
-                    ? `@${sender.split("@")[0]} ${reaction}ed @${mentioned.split("@")[0]} 💫`
-                    : `@${sender.split("@")[0]} ${reaction}ed 💫`;
+                    ? `@${sender.split("@")[0]} ${reaction}ed @${mentioned.split("@")[0]}`
+                    : `@${sender.split("@")[0]} ${reaction}ed`;
 
                 // Send as MP4 video
                 await sock.sendMessage(
