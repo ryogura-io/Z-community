@@ -184,6 +184,48 @@ const groupCommands = {
         },
     },
 
+    delete: {
+    name: "delete",
+    aliases: ["del"],
+    description: "Deletes a quoted message",
+    usage: "delete (reply to a message)",
+    execute: async ({ sock, chatId, message }) => {
+        try {
+            // Ensure the user replied to a message
+            const quoted = message.message?.extendedTextMessage?.contextInfo;
+            if (!quoted || !quoted.stanzaId) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Please reply to the message you want to delete." },
+                    { quoted: message }
+                );
+            }
+
+            // Delete the quoted message
+            await sock.sendMessage(chatId, {
+                delete: {
+                    remoteJid: chatId,
+                    fromMe:
+                        quoted.participant === (message.key.fromMe
+                            ? sock.user.id
+                            : quoted.participant),
+                    id: quoted.stanzaId,
+                    participant: quoted.participant,
+                },
+            });
+
+        } catch (err) {
+            console.error("Delete command error:", err);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Failed to delete the message." },
+                { quoted: message }
+            );
+        }
+    },
+},
+
+
     promote: {
         description: "Promote a member to admin",
         usage: "promote <@user>",
@@ -480,102 +522,95 @@ const groupCommands = {
     },
 
     close: {
-        description: "Close group (admins only can send messages)",
-        usage: "close",
-        adminOnly: false,
-        execute: async (context) => {
-            const { chatId, isGroup, bot, sock, sender, message } = context;
+    description: "Close group (admins only can send messages)",
+    usage: "close [minutes]",
+    adminOnly: false,
+    execute: async (context) => {
+        const { chatId, isGroup, sock, sender, message, args } = context;
+        const permissions = require("../helpers/permissions");
 
-            if (!isGroup) {
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ This command can only be used in groups." },
-                    { quoted: message },
-                );
-                return;
-            }
+        if (!isGroup) {
+            return sock.sendMessage(chatId, { text: "❌ This command can only be used in groups." }, { quoted: message });
+        }
 
-            const isGroupAdmin = await permissions.isGroupAdmin(
-                sender,
-                chatId,
-                sock,
-            );
-            if (!isGroupAdmin) {
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Only group admins can close the group." },
-                    { quoted: message },
-                );
-                return;
-            }
+        const isGroupAdmin = await permissions.isGroupAdmin(sender, chatId, sock);
+        if (!isGroupAdmin) {
+            return sock.sendMessage(chatId, { text: "❌ Only group admins can close the group." }, { quoted: message });
+        }
 
-            try {
-                await sock.groupSettingUpdate(chatId, "announcement");
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text: "🔒 Group closed. Only admins can send messages now.",
-                    },
-                    { quoted: message },
-                );
-            } catch (error) {
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Error closing group. Ensure bot is admin." },
-                    { quoted: message },
-                );
+        const minutes = args[0] && !isNaN(args[0]) ? parseInt(args[0]) : null;
+
+        try {
+            await sock.groupSettingUpdate(chatId, "announcement");
+            let text = "🔒 Group closed. Only admins can send messages now.";
+            if (minutes) text += `\n⏰ Will reopen automatically in ${minutes} minute${minutes > 1 ? "s" : ""}.`;
+
+            await sock.sendMessage(chatId, { text }, { quoted: message });
+
+            if (minutes) {
+                setTimeout(async () => {
+                    try {
+                        await sock.groupSettingUpdate(chatId, "not_announcement");
+                        await sock.sendMessage(chatId, {
+                            text: `🔓 Group reopened automatically after ${minutes} minute${minutes > 1 ? "s" : ""}.`,
+                        });
+                    } catch (err) {
+                        console.error("Auto reopen error:", err);
+                    }
+                }, minutes * 60 * 1000);
             }
-        },
+        } catch (error) {
+            console.error("Close command error:", error);
+            await sock.sendMessage(chatId, { text: "❌ Error closing group. Ensure bot is admin." }, { quoted: message });
+        }
     },
+},
 
-    open: {
-        description: "Open group (all members can send messages)",
-        usage: "open",
-        adminOnly: false,
-        execute: async (context) => {
-            const { chatId, isGroup, bot, sock, sender, message } = context;
+open: {
+    description: "Open group (all members can send messages)",
+    usage: "open [minutes]",
+    adminOnly: false,
+    execute: async (context) => {
+        const { chatId, isGroup, sock, sender, message, args } = context;
+        const permissions = require("../helpers/permissions");
 
-            if (!isGroup) {
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ This command can only be used in groups." },
-                    { quoted: message },
-                );
-                return;
+        if (!isGroup) {
+            return sock.sendMessage(chatId, { text: "❌ This command can only be used in groups." }, { quoted: message });
+        }
+
+        const isGroupAdmin = await permissions.isGroupAdmin(sender, chatId, sock);
+        if (!isGroupAdmin) {
+            return sock.sendMessage(chatId, { text: "❌ Only group admins can open the group." }, { quoted: message });
+        }
+
+        const minutes = args[0] && !isNaN(args[0]) ? parseInt(args[0]) : null;
+
+        try {
+            await sock.groupSettingUpdate(chatId, "not_announcement");
+            let text = "🔓 Group opened. All members can send messages now.";
+            if (minutes) text += `\n⏰ Will close automatically in ${minutes} minute${minutes > 1 ? "s" : ""}.`;
+
+            await sock.sendMessage(chatId, { text }, { quoted: message });
+
+            if (minutes) {
+                setTimeout(async () => {
+                    try {
+                        await sock.groupSettingUpdate(chatId, "announcement");
+                        await sock.sendMessage(chatId, {
+                            text: `🔒 Group closed automatically after ${minutes} minute${minutes > 1 ? "s" : ""}.`,
+                        });
+                    } catch (err) {
+                        console.error("Auto close error:", err);
+                    }
+                }, minutes * 60 * 1000);
             }
-
-            const isGroupAdmin = await permissions.isGroupAdmin(
-                sender,
-                chatId,
-                sock,
-            );
-            if (!isGroupAdmin) {
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Only group admins can open the group." },
-                    { quoted: message },
-                );
-                return;
-            }
-
-            try {
-                await sock.groupSettingUpdate(chatId, "not_announcement");
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text: "🔓 Group opened. All members can send messages now.",
-                    },
-                    { quoted: message },
-                );
-            } catch (error) {
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Error opening group." },
-                    { quoted: message },
-                );
-            }
-        },
+        } catch (error) {
+            console.error("Open command error:", error);
+            await sock.sendMessage(chatId, { text: "❌ Error opening group." }, { quoted: message });
+        }
     },
+},
+
 
     tag: {
         description:
