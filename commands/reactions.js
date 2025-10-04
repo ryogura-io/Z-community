@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const { convertToMp4 } = require("../utils/deckHelper");
 
-
 const reactions = [
     "bully",
     "cuddle",
@@ -29,11 +28,15 @@ reactions.forEach((reaction) => {
         adminOnly: false,
         execute: async ({ chatId, sock, message }) => {
             const sender = message.key.participant || message.key.remoteJid;
-            const mentioned = message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const mentioned =
+                message.message?.extendedTextMessage?.contextInfo
+                    ?.mentionedJid?.[0];
 
             try {
                 // Fetch GIF from API
-                const res = await fetch(`https://api.waifu.pics/sfw/${reaction}`);
+                const res = await fetch(
+                    `https://api.waifu.pics/sfw/${reaction}`,
+                );
                 const data = await res.json();
                 if (!data.url) throw new Error("API returned no URL.");
 
@@ -42,7 +45,10 @@ reactions.forEach((reaction) => {
                 const gifBuffer = await gifRes.arrayBuffer();
 
                 // Prepare temp paths
-                const tempMp4Path = path.join(__dirname, `../temp_${Date.now()}.mp4`);
+                const tempMp4Path = path.join(
+                    __dirname,
+                    `../temp_${Date.now()}.mp4`,
+                );
 
                 // Convert GIF to MP4
                 await convertToMp4(Buffer.from(gifBuffer), tempMp4Path);
@@ -59,19 +65,19 @@ reactions.forEach((reaction) => {
                         video: fs.readFileSync(tempMp4Path),
                         caption,
                         mentions: [sender, ...(mentioned ? [mentioned] : [])],
+                        gifPlayback: true,
                     },
-                    { quoted: message }
+                    { quoted: message },
                 );
 
                 // Cleanup
                 fs.unlinkSync(tempMp4Path);
-
             } catch (err) {
                 console.error(`[${reaction}] Error:`, err);
                 await sock.sendMessage(
                     chatId,
                     { text: `❌ Failed to fetch or convert ${reaction} GIF.` },
-                    { quoted: message }
+                    { quoted: message },
                 );
             }
         },
