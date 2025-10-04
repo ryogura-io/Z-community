@@ -379,6 +379,36 @@ const moderatorCommands = {
                     },
                     { quoted: message },
                 );
+
+                // Auto-disable after 5 minutes if still enabled
+            setTimeout(async () => {
+                try {
+                    const updatedFamilia = await Familia.findById(familia._id);
+                    const updatedGroup = await Group.findOne({ groupId: chatId });
+
+                    if (updatedFamilia?.slot === "enabled") {
+                        updatedFamilia.slot = "disabled";
+                        await updatedFamilia.save();
+                    }
+
+                    if (updatedGroup?.slot === "enabled") {
+                        updatedGroup.slot = "disabled";
+                        await updatedGroup.save();
+                    }
+
+                    // Notify group if they were still open
+                    if (
+                        updatedFamilia?.slot === "disabled" ||
+                        updatedGroup?.slot === "disabled"
+                    ) {
+                        await sock.sendMessage(chatId, {
+                            text: `⏰ Slots for familia *${familiaName}* have been automatically closed after 5 minutes.`,
+                        });
+                    }
+                } catch (err) {
+                    console.error("Auto disable slot error:", err);
+                }
+            }, 5 * 60 * 1000); // 5 minutes
             } catch (error) {
                 console.error("StartSlot error:", error);
                 await sock.sendMessage(
