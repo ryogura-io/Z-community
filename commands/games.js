@@ -32,12 +32,12 @@ async function checkStreak(player, sock, chatId, message) {
     }
 
     const milestones = {
-        5: 1000,
-        10: 2000,
-        20: 4000,
-        40: 8000,
-        80: 16000,
-        160: 20000,
+        5: 500,
+        10: 1000,
+        20: 1500,
+        40: 3000,
+        80: 6000,
+        160: 12000,
     };
 
     if (milestones[player.gameStreak]) {
@@ -632,12 +632,12 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                         }
 
                         const milestones = {
-                            30: 1500,
-                            40: 3000,
-                            60: 6000,
-                            80: 12000,
-                            100: 24000,
-                            200: 50000,
+                            20: 1000,
+                            40: 2000,
+                            80: 4000,
+                            100: 5000,
+                            160: 8000,
+                            320: 16000,
                         };
 
                         if (milestones[player.gameStreak]) {
