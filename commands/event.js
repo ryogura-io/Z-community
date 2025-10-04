@@ -172,8 +172,8 @@ const eventCommands = {
         const roll = Math.random() * 100;
         let resultText = "";
 
-        if (roll < 1) {
-          // 1% chance - Event Card
+        if (roll < 2) {
+          // 2% chance - Event Card
           const config = await Config.findOne({}).populate({
             path: "eDeck",
             model: "Card",
@@ -194,7 +194,7 @@ const eventCommands = {
               resultText = `👑 You pulled an *Event Card!* \n~> *${card.name}* _from_ ${card.series}`;
             }
           }
-        } else if (roll < 3) {
+        } else if (roll < 4) {
           // 3% - Random Tier 5 Card
           const t5Cards = await Card.find({ tier: "5" });
           if (t5Cards.length > 0) {
@@ -205,7 +205,7 @@ const eventCommands = {
           } else {
             resultText = "⚠️ No Tier 5 cards found in the DB!";
           }
-        } else if (roll < 7) {
+        } else if (roll < 8) {
           // 3% - 30 Crystals
           player.crystals += 20;
           resultText = "💎 You received *20 Crystals!*";
