@@ -94,6 +94,7 @@ const cardCommands = {
                 let rewardShards = 0;
                 if (Math.random() <= rewardChance) {
                     rewardShards = 2000;
+                    player = await Player.findById(player._id);
                     player.shards += rewardShards;
                     const bonusMsg = `💰 Congratulations, you successfully won 2000 bonus shards`;
                     await sock.sendMessage(
@@ -107,7 +108,7 @@ const cardCommands = {
                 const {
                     addItemToInventory,
                 } = require("../utils/inventoryHelper");
-                if (Math.random() <= 0.03) {
+                if (Math.random() <= 1) {
                     await addItemToInventory(sender, "event slip", 1);
                     await sock.sendMessage(
                         chatId,
@@ -118,6 +119,7 @@ const cardCommands = {
                     );
                 }
 
+                player = await Player.findById(player._id);
                 player.exp += 20;
                 await player.save();
 
