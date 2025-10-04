@@ -1,7 +1,7 @@
 // commands/event.js
 const Player = require("../models/Player");
 const Config = require("../models/Config");
-const { Card } = require("../models/Card");
+const Card = require("../models/Card");
 const { sendCard, createCardGrid } = require("../utils/deckHelper");
 const {
   addItemToInventory,
