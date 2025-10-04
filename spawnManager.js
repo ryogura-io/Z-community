@@ -90,17 +90,17 @@ async function getRandomCard() {
         }
 
         // Count non-event cards in selected tier
-        const count = await Card.countDocuments({ tier: selectedTier, event: { $ne: true } });
+        const count = await Card.countDocuments({ tier: selectedTier, isEvent: { $ne: true } });
         if (count === 0) {
             // Fallback: pick a completely random non-event card
-            const totalCards = await Card.countDocuments({ event: { $ne: true } });
+            const totalCards = await Card.countDocuments({ isEvent: { $ne: true } });
             const randomIndex = Math.floor(Math.random() * totalCards);
-            return await Card.findOne({ event: { $ne: true } }).skip(randomIndex);
+            return await Card.findOne({ isEvent: { $ne: true } }).skip(randomIndex);
         }
 
         // Pick random non-event card from selected tier
         const randomIndex = Math.floor(Math.random() * count);
-        return await Card.findOne({ tier: selectedTier, event: { $ne: true } }).skip(randomIndex);
+        return await Card.findOne({ tier: selectedTier, isEvent: { $ne: true } }).skip(randomIndex);
     } catch (error) {
         console.error("Error getting random card:", error);
         return null;
