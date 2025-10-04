@@ -323,7 +323,7 @@ class Bot {
                 // If leveled up, apply rewards
                 if (newLevel > oldLevel) {
                     player.level = newLevel;
-                    player.shards += newLevel * 100; // Level up bonus (shards)
+                    player.shards += newLevel * 300; // Level up bonus (shards)
 
                     // Crystal rewards: Level 1->2 = 100, then +5 per level
                     const crystalReward = 100 + (newLevel - 2) * 5;
@@ -335,7 +335,7 @@ class Bot {
                             `🎉 *LEVEL UP!*\n\n` +
                             `👤 *${player.name}* reached Level ${newLevel}!\n` +
                             `🎁 *Rewards:*\n` +
-                            `💰 Shards: +${newLevel * 100}\n` +
+                            `💰 Shards: +${newLevel * 300}\n` +
                             `💎 Crystals: +${crystalReward}\n\n` +
                             `🌟 Keep collecting to reach even higher levels!`;
 
