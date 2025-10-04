@@ -685,6 +685,14 @@ const economyCommands = {
                         { quoted: message },
                     );
                 }
+                
+                if (betAmount > 3000) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "❌ Maximum bet is 3000 shards!" },
+                        { quoted: message },
+                    );
+                }
 
                 if (player.shards < betAmount) {
                     return sock.sendMessage(
@@ -719,7 +727,7 @@ const economyCommands = {
                 let reel1 = getWeightedSymbol();
                 let reel2 = getWeightedSymbol();
                 let reel3 = getWeightedSymbol();
-                if (Math.random() < 0.70) {
+                if (Math.random() < 0.60) {
                     // 70% of the time
                     const common = ["🍒", "🍋", "🍊"];
                     const symbol =
