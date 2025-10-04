@@ -10,7 +10,7 @@ const configSchema = new mongoose.Schema({
   disabledCommands: [{ type: String }], // Array of disabled command names
 
   //eventCard deck
-  eDeck: [{ type: mongoose.Schema.Types.ObjectId, ref: "Card" }], // all owned cards
+  eDeck: [{ type: mongoose.Schema.Types.ObjectId, ref: "eCard" }], // all owned cards
 
   // Other global settings if needed later
   createdAt: { type: Date, default: Date.now },
@@ -23,5 +23,6 @@ configSchema.pre("save", function (next) {
 });
 
 module.exports = mongoose.model("Config", configSchema);
+
 
 
