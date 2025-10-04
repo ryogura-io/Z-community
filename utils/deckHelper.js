@@ -152,4 +152,4 @@ async function createCardGrid(cards, columns = 3, cardWidth = 230, cardHeight = 
     return await background.composite(composite).png().toBuffer();
 }
 
-module.exports = { sendCard, createCardGrid };
+module.exports = { sendCard, createCardGrid, convertToMp4 };
