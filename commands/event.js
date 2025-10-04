@@ -2,7 +2,6 @@
 const Player = require("../models/Player");
 const Config = require("../models/Config");
 const { Card } = require("../models/Card");
-const eCard = require("../models/eCard");
 const { sendCard, createCardGrid } = require("../utils/deckHelper");
 const {
   addItemToInventory,
@@ -28,7 +27,7 @@ const eventCommands = {
         const url = args[0];
 
         // Find card in the eventCards collection
-        const card = await eCard.findOne({ url });
+        const card = await Card.findOne({ url });
         if (!card)
           return sock.sendMessage(
             chatId,
@@ -78,7 +77,7 @@ const eventCommands = {
       try {
         const config = await Config.findOne({}).populate({
           path: "eDeck",
-          model: "eCard",
+          model: "Card",
         });
 
         if (!config || !config.eDeck || config.eDeck.length === 0) {
@@ -177,7 +176,7 @@ const eventCommands = {
           // 1% chance - Event Card
           const config = await Config.findOne({}).populate({
             path: "eDeck",
-            model: "eCard",
+            model: "Card",
           });
           if (!config || !config.eDeck || config.eDeck.length === 0) {
             resultText =
@@ -195,21 +194,21 @@ const eventCommands = {
               resultText = `🌟 You pulled an *Event Card!* 🎴\n*${card.name}* (Tier ${card.tier})`;
             }
           }
-        } else if (roll < 4) {
-          // 3% - 30 Crystals
-          player.crystals += 30;
-          resultText = "💎 You received *30 Crystals!*";
-        } else if (roll < 7) {
+        } else if (roll < 3) {
           // 3% - Random Tier 5 Card
           const t5Cards = await Card.find({ tier: "5" });
           if (t5Cards.length > 0) {
             const randomCard =
               t5Cards[Math.floor(Math.random() * t5Cards.length)];
             player.collection.push(randomCard._id);
-            resultText = `✨ You pulled a *Tier 5 Card!* 🎴\n*${randomCard.name}*`;
+            resultText = `✨ You pulled a *Tier 5 Card!* \n🎴 *Name:*: *${randomCard.name}* \n⭐ *Tier:*: *${randomCard.tier}*`;
           } else {
             resultText = "⚠️ No Tier 5 cards found in the DB!";
           }
+        } else if (roll < 5) {
+          // 3% - 30 Crystals
+          player.crystals += 20;
+          resultText = "💎 You received *20 Crystals!*";
         } else if (roll < 57) {
           // 50% - 500 Shards
           player.shards += 500;
@@ -243,67 +242,67 @@ const eventCommands = {
   },
 
   setseries: {
-        description: "Set a new series for a card in the eDeck",
-        usage: "setseries <edeck_index> <new_series_name>",
-        adminOnly: true,
-        execute: async ({ chatId, sock, message, args }) => {
-            try {
-                // Check args
-                if (args.length < 2) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: "❌ Usage: !setseries <edeck_index> <new_series_name>" },
-                        { quoted: message },
-                    );
-                }
+    description: "Set a new series for a card in the eDeck",
+    usage: "setseries <edeck_index> <new_series_name>",
+    adminOnly: true,
+    execute: async ({ chatId, sock, message, args }) => {
+      try {
+        // Check args
+        if (args.length < 2) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ Usage: !setseries <edeck_index> <new_series_name>" },
+            { quoted: message },
+          );
+        }
 
-                const index = parseInt(args[0]) - 1;
-                const newSeries = args.slice(1).join(" ").trim();
+        const index = parseInt(args[0]) - 1;
+        const newSeries = args.slice(1).join(" ").trim();
 
-                if (isNaN(index) || index < 0) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: "⚠️ Please provide a valid eDeck index number." },
-                        { quoted: message },
-                    );
-                }
+        if (isNaN(index) || index < 0) {
+          return sock.sendMessage(
+            chatId,
+            { text: "⚠️ Please provide a valid eDeck index number." },
+            { quoted: message },
+          );
+        }
 
-                // Get config and populate eDeck
-                const config = await Config.findOne({}).populate("eDeck");
-                if (!config || !config.eDeck || !config.eDeck[index]) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: "❌ No card found at that index in the eDeck." },
-                        { quoted: message },
-                    );
-                }
+        // Get config and populate eDeck
+        const config = await Config.findOne({}).populate("eDeck");
+        if (!config || !config.eDeck || !config.eDeck[index]) {
+          return sock.sendMessage(
+            chatId,
+            { text: "❌ No card found at that index in the eDeck." },
+            { quoted: message },
+          );
+        }
 
-                const card = config.eDeck[index];
+        const card = config.eDeck[index];
 
-                // Update the card in the eventCards DB
-                await eCard.findByIdAndUpdate(
-                    card._id,
-                    { $set: { series: newSeries } },
-                    { new: true }
-                );
+        // Update the card in the eventCards DB
+        await Card.findByIdAndUpdate(
+          card._id,
+          { $set: { series: newSeries } },
+          { new: true },
+        );
 
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text: `✅ Updated *${card.name}*'s series to *${newSeries}*!`,
-                    },
-                    { quoted: message },
-                );
-            } catch (err) {
-                console.error("setseries error:", err);
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Failed to update card series." },
-                    { quoted: message },
-                );
-            }
-        },
+        await sock.sendMessage(
+          chatId,
+          {
+            text: `✅ Updated *${card.name}*'s series to *${newSeries}*!`,
+          },
+          { quoted: message },
+        );
+      } catch (err) {
+        console.error("setseries error:", err);
+        await sock.sendMessage(
+          chatId,
+          { text: "❌ Failed to update card series." },
+          { quoted: message },
+        );
+      }
     },
+  },
 };
 
 module.exports = eventCommands;
