@@ -1030,6 +1030,69 @@ deck.forEach((card, i) => {
             }
         },
     },
+
+    setseries: {
+        description: "Set a new series for a card in the eDeck",
+        usage: "setseries <edeck_index> <new_series_name>",
+        adminOnly: true,
+        execute: async ({ chatId, sock, message, args }) => {
+            try {
+                // Check args
+                if (args.length < 2) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "❌ Usage: !setseries <edeck_index> <new_series_name>" },
+                        { quoted: message },
+                    );
+                }
+
+                const index = parseInt(args[0]) - 1;
+                const newSeries = args.slice(1).join(" ").trim();
+
+                if (isNaN(index) || index < 0) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "⚠️ Please provide a valid eDeck index number." },
+                        { quoted: message },
+                    );
+                }
+
+                // Get config and populate eDeck
+                const config = await Config.findOne({}).populate("eDeck");
+                if (!config || !config.eDeck || !config.eDeck[index]) {
+                    return sock.sendMessage(
+                        chatId,
+                        { text: "❌ No card found at that index in the eDeck." },
+                        { quoted: message },
+                    );
+                }
+
+                const card = config.eDeck[index];
+
+                // Update the card in the eventCards DB
+                await eCard.findByIdAndUpdate(
+                    card._id,
+                    { $set: { series: newSeries } },
+                    { new: true }
+                );
+
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        text: `✅ Updated *${card.name}*'s series to *${newSeries}*!`,
+                    },
+                    { quoted: message },
+                );
+            } catch (err) {
+                console.error("setseries error:", err);
+                await sock.sendMessage(
+                    chatId,
+                    { text: "❌ Failed to update card series." },
+                    { quoted: message },
+                );
+            }
+        },
+    },
 };
 
 module.exports = moderatorCommands;
