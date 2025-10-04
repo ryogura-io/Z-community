@@ -60,6 +60,8 @@ const categoryMap = {
             "leaderboard",
             "mods",
             "profile",
+"character",
+"addchar",
         ],
     },
     event: {
