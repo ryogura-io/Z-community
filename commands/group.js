@@ -90,10 +90,10 @@ const groupCommands = {
         },
     },
 
-    remove: {
+    boot: {
         description: "Remove a member from the group",
         usage: "remove <@user>",
-        aliases: ["kick"],
+        aliases: ["kik"],
         adminOnly: false,
         execute: async (context) => {
             const { args, chatId, isGroup, bot, sock, sender, message } =
@@ -187,11 +187,10 @@ const groupCommands = {
     delete: {
     name: "delete",
     aliases: ["del"],
-    description: "Deletes a quoted message",
+    description: "Deletes a quoted message (anyone's)",
     usage: "delete (reply to a message)",
     execute: async ({ sock, chatId, message }) => {
         try {
-            // Ensure the user replied to a message
             const quoted = message.message?.extendedTextMessage?.contextInfo;
             if (!quoted || !quoted.stanzaId) {
                 return sock.sendMessage(
@@ -201,16 +200,13 @@ const groupCommands = {
                 );
             }
 
-            // Delete the quoted message
+            // 🧹 Delete the quoted message (works if the bot has admin privileges)
             await sock.sendMessage(chatId, {
                 delete: {
                     remoteJid: chatId,
-                    fromMe:
-                        quoted.participant === (message.key.fromMe
-                            ? sock.user.id
-                            : quoted.participant),
+                    fromMe: false, 
                     id: quoted.stanzaId,
-                    participant: quoted.participant,
+                    participant: quoted.participant, // required for group deletions
                 },
             });
 
@@ -224,6 +220,7 @@ const groupCommands = {
         }
     },
 },
+
 
 
     promote: {
@@ -284,32 +281,26 @@ const groupCommands = {
             }
 
             try {
-                await sock.groupParticipantsUpdate(
-                    chatId,
-                    [targetUser],
-                    "promote",
-                );
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text: `✅ Successfully promoted @${targetUser.split("@")[0]} to admin.`,
-                    },
-                    {
-                        mentions: [targetUser],
-                    },
-                );
-            } catch (error) {
-                console.error("Promote error:", error);
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text: `❌ Failed to promote @${targetUser.split("@")[0]}.`,
-                    },
-                    {
-                        mentions: [targetUser],
-                    },
-                );
-            }
+            await sock.groupParticipantsUpdate(chatId, [targetUser], "promote");
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: `✅ Successfully promoted @${targetUser.split("@")[0]} to admin.`,
+                    mentions: [targetUser], 
+                },
+                { quoted: message }
+            );
+        } catch (error) {
+            console.error("Promote error:", error);
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: `❌ Failed to promote @${targetUser.split("@")[0]}.`,
+                    mentions: [targetUser],
+                },
+                { quoted: message }
+            );
+        }
         },
     },
 
@@ -380,8 +371,6 @@ const groupCommands = {
                     chatId,
                     {
                         text: `✅ Successfully demoted @${targetUser.split("@")[0]} from admin.`,
-                    },
-                    {
                         mentions: [targetUser],
                     },
                 );
@@ -391,8 +380,6 @@ const groupCommands = {
                     chatId,
                     {
                         text: `❌ Failed to demote @${targetUser.split("@")[0]}.`,
-                    },
-                    {
                         mentions: [targetUser],
                     },
                 );
