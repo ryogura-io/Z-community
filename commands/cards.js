@@ -109,7 +109,7 @@ const cardCommands = {
                 const {
                     addItemToInventory,
                 } = require("../utils/inventoryHelper");
-                if (Math.random() <= 0.15) {
+                if (Math.random() <= 0.2) {
                     await addItemToInventory(sender, "event slip", 1);
                     await sock.sendMessage(
                         chatId,
@@ -273,12 +273,12 @@ const cardCommands = {
 
                 // Build message
                 let cardsMsg = `🎴 *${player.name}'s Cards* (${allCards.length} cards)\n\n`;
-
+                emoji = ["🔥", "🔹", "🔸", "♦️", "💠", "🌸", "🌀", "⛩️"];
                 for (const tier of tierOrder) {
                     const tierCards = grouped[tier];
                     if (tierCards.length === 0) continue; // skip empty tiers
 
-                    cardsMsg += `⭐ *Tier ${tier}* (${tierCards.length})\n`;
+                    cardsMsg += `${emoji[tier]} *Tier ${tier}* (${tierCards.length})\n`;
                     tierCards.forEach((card, idx) => {
                         cardsMsg += `   ${idx + 1}. ${card.name}\n`;
                     });
@@ -602,9 +602,10 @@ const cardCommands = {
                         tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier),
                 );
 
-                let seriesMsg = `🎭 *${player.name}'s ${seriesName} Cards (${seriesCards.length})*\n\n`;
+                let seriesMsg = `🃏 *${player.name}'s ${seriesName} cards (${seriesCards.length})*\n\n`;
+                emoji = ["🔥", "🔹", "🔸", "♦️", "💠", "🌸", "🌀", "⛩️"];
                 sortedCards.forEach((card, index) => {
-                    seriesMsg += `${index + 1}. ${card.name} (Tier ${card.tier})\n`;
+                    seriesMsg += `${emoji[card.tier]} ${card.name} (Tier ${card.tier})\n`;
                 });
 
                 await sock.sendMessage(
@@ -841,17 +842,17 @@ const cardCommands = {
         }
 
         const readMore = String.fromCharCode(8206).repeat(4001);
-                    let deckMsg = `🃏 *${player.name}'s Deck*\n\n${readMore}`;
+            let deckMsg = `🃏 *${player.name}'s Deck*\n\n${readMore}`;
 
-                    for (let i = 0; i < 12; i++) {
-                        const card = player.deck[i];
-                        if (card) {
-                            deckMsg +=
-                                `🎴 *${i + 1}.* *${card.name}*` +
-                                `\n        Series: ${card.series}` +
-                                `\n        Tier: ${card.tier}\n\n`;
-                        }
-                    }
+            for (let i = 0; i < 12; i++) {
+                const card = player.deck[i];
+                if (card) {
+                    deckMsg +=
+                        `*${i + 1}.*    *${card.name}*` +
+                        `\n🎭 Series: ${card.series}` +
+                        `\n⭐ Tier: ${card.tier}\n\n`;
+                }
+            }
 
                     deckMsg += `\n💡 Use \`!deck <number>\` to see individual cards`;
         const imgBuffer = await createCardGrid(player.deck.filter(Boolean));
