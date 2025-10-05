@@ -325,27 +325,35 @@ const familiaCommands = {
                         { quoted: message },
                     );
 
-                let msg = `🏰 *${familia.name}*\n👑 Head: @${familia.head.split("@")[0]}\n`;
-                msg += `📝 Description: ${familia.description}\n\n`;
-                msg += `👥 Members (${familia.members.length}):\n`;
-                // Load all member documents at once
+                // Fetch all members' data
                 const members = await Player.find({
                     userId: { $in: familia.members },
                 });
 
-                familia.members.forEach((memberId) => {
-                    const player = members.find((m) => m.userId === memberId);
-                    const displayName = player
-                        ? player.name
-                        : memberId.split("@")[0]; // fallback
-                    msg += `- ${displayName}\n`;
-                });
+                // Build familia message
+                let msg = `🏰 *${familia.name}*\n👑 Head: @${familia.head.split("@")[0]}\n`;
+                msg += `📝 Description: ${familia.description || "No description"}\n\n`;
+                msg += `👥 *Members (${familia.members.length}):*\n`;
+
+                const mentions = [familia.head];
+
+                for (const memberId of familia.members) {
+                    const member = members.find((m) => m.userId === memberId);
+                    if (member) {
+                        msg += `~ @${memberId.split("@")[0]}\n`;
+                        msg += `EXP: *${member.exp?.toLocaleString() || 0}*\n\n`;
+                        mentions.push(memberId);
+                    } else {
+                        msg += `~> *@${memberId.split("@")[0]}* (not found)\n`;
+                        mentions.push(memberId);
+                    }
+                }
 
                 await sock.sendMessage(
                     chatId,
                     {
-                        text: msg,
-                        mentions: [familia.head], // ✅ must be inside here
+                        text: msg.trim(),
+                        mentions,
                     },
                     { quoted: message },
                 );
