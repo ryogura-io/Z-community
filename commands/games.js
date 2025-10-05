@@ -53,6 +53,55 @@ async function checkStreak(player, sock, chatId, message) {
     }
 }
 
+async function startRound(game, chatId, sock) {
+    const currentPlayer = game.players[game.currentTurn];
+    const playerTag = `@${currentPlayer.split("@")[0]}`;
+
+    await sock.sendMessage(chatId, {
+        text: `🌀 *Round Start!*\n\n👉 ${playerTag}'s turn!\nEnter a *${game.wordLength}-letter word* starting with *${game.currentLetter.toUpperCase()}*\n\nUse: !a <word>`,
+        mentions: [currentPlayer],
+    });
+
+    // Start timeout
+    game.roundTimer = setTimeout(async () => {
+        await sock.sendMessage(chatId, {
+            text: `⏰ ${playerTag} took too long and has been removed!`,
+            mentions: [currentPlayer],
+        });
+        game.players.splice(game.currentTurn, 1);
+
+        if (game.players.length === 1) {
+            await sock.sendMessage(chatId, {
+                text: `🏆 Winner: @${game.players[0].split("@")[0]}!`,
+                mentions: [game.players[0]],
+            });
+            gameStates.delete(chatId);
+            return;
+        }
+
+        if (game.currentTurn >= game.players.length) game.currentTurn = 0;
+        await nextTurn(game, chatId, sock);
+    }, game.timeLimit * 1000);
+}
+
+async function nextTurn(game, chatId, sock) {
+    clearTimeout(game.roundTimer);
+    game.currentTurn = (game.currentTurn + 1) % game.players.length;
+
+    // After each full round (back to host)
+    if (game.currentTurn === 0) {
+        game.wordLength++;
+        game.timeLimit = Math.max(20, game.timeLimit - 5); // reduce but not below 20
+        await sock.sendMessage(chatId, {
+            text: `🔄 *New Round!*\nWord length increased to ${game.wordLength} letters.\nTime reduced to ${game.timeLimit}s.`,
+        });
+    }
+
+    game.currentLetter = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+    await startRound(game, chatId, sock);
+}
+
+
 const gameCommands = {
     hangman: {
         description: "Start a hangman game",
@@ -556,6 +605,69 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
         },
     },
 
+    word: {
+    description: "Start or join a word challenge game",
+    usage: "word",
+    adminOnly: false,
+    execute: async ({ chatId, sender, sock, message }) => {
+        const axios = require("axios");
+
+        // Check if game active
+        if (gameStates.has(chatId) && gameStates.get(chatId).gameType === "word") {
+            const game = gameStates.get(chatId);
+            if (!game.players.includes(sender)) {
+                game.players.push(sender);
+                await sock.sendMessage(chatId, {
+                    text: `✅ @${sender.split("@")[0]} joined the game!`,
+                    mentions: [sender],
+                });
+            } else {
+                await sock.sendMessage(chatId, {
+                    text: `❌ You're already in the game!`,
+                    mentions: [sender],
+                });
+            }
+            return;
+        }
+
+        // Initialize game
+        const game = {
+            gameType: "word",
+            host: sender,
+            players: [sender],
+            started: false,
+            currentTurn: 0,
+            currentLetter: null,
+            wordLength: 3,
+            timeLimit: 50,
+            roundTimer: null,
+        };
+
+        gameStates.set(chatId, game);
+
+        await sock.sendMessage(chatId, {
+            text: `🎮 *Word Game Started!*\n\n@${sender.split("@")[0]} created a new lobby!\nOthers can join by typing *!word*.\n\n⏳ Game starts in 30 seconds...`,
+            mentions: [sender],
+        });
+
+        setTimeout(async () => {
+            const g = gameStates.get(chatId);
+            if (!g || g.players.length < 2) {
+                await sock.sendMessage(chatId, {
+                    text: "❌ Not enough players joined. Game canceled.",
+                });
+                gameStates.delete(chatId);
+                return;
+            }
+
+            g.started = true;
+            g.currentLetter = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+            await startRound(g, chatId, sock);
+        }, 30 * 1000);
+    },
+},
+
+
     a: {
         description: "Answer/reply in games",
         usage: "a <answer>",
@@ -739,6 +851,60 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
                     }
                     break;
                 }
+
+                    case "word": {
+    const game = gameStates.get(chatId);
+    if (!game.started) return;
+
+    const currentPlayer = game.players[game.currentTurn];
+    if (sender !== currentPlayer) {
+        await sock.sendMessage(chatId, {
+            text: `❌ Not your turn! It's @${currentPlayer.split("@")[0]}'s turn.`,
+            mentions: [currentPlayer],
+        });
+        return;
+    }
+
+    const word = answer.trim().toLowerCase();
+    if (!word.startsWith(game.currentLetter)) {
+        await sock.sendMessage(chatId, {
+            text: `❌ Word must start with *${game.currentLetter.toUpperCase()}*!`,
+        });
+        return;
+    }
+
+    if (word.length !== game.wordLength) {
+        await sock.sendMessage(chatId, {
+            text: `❌ Word must be ${game.wordLength} letters long!`,
+        });
+        return;
+    }
+
+    try {
+        const res = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        if (res.data && Array.isArray(res.data)) {
+            await sock.sendMessage(chatId, { text: `✅ Valid word: *${word}*` });
+            await nextTurn(game, chatId, sock);
+        } else {
+            throw new Error("Invalid");
+        }
+    } catch {
+        await sock.sendMessage(chatId, { text: `❌ Invalid word: *${word}*` });
+        game.players.splice(game.currentTurn, 1);
+        if (game.players.length === 1) {
+            await sock.sendMessage(chatId, {
+                text: `🏆 Winner: @${game.players[0].split("@")[0]}!`,
+                mentions: [game.players[0]],
+            });
+            gameStates.delete(chatId);
+            return;
+        }
+        if (game.currentTurn >= game.players.length) game.currentTurn = 0;
+        await nextTurn(game, chatId, sock);
+    }
+    break;
+}
+
 
                 default:
                     await sock.sendMessage(
