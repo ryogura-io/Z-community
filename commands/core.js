@@ -326,7 +326,7 @@ const coreCommands = {
                     const familias = await Familia.find({}).populate("members");
                     const familiaStats = [];
 
-                    for (const familia of familias) {
+                    
                         const members = await Player.find({
                             userId: { $in: familia.members },
                         });
@@ -337,6 +337,7 @@ const coreCommands = {
                         familiaStats.push({
                             name: familia.name,
                             head: familia.head,
+                            members: familia.members,
                             totalExp,
                         });
                     }
@@ -353,7 +354,9 @@ const coreCommands = {
                                   : index === 2
                                     ? "🥉"
                                     : `${index + 1}.`;
-                        leaderboard += `${medal} *${familia.name}* — ${familia.totalExp.toLocaleString()} XP\n`;
+                        leaderboard += `${medal} *${familia.name}*\n`;
+                        leaderboard += `       Total Exp: ${familia.totalExp.toLocaleString()} XP\n`;
+                        leaderboard += `       Members: ${familia.members?.length}\n\n`;
                     });
 
                     return sock.sendMessage(
