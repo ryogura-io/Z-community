@@ -326,7 +326,7 @@ const coreCommands = {
                     const familias = await Familia.find({}).populate("members");
                     const familiaStats = [];
 
-                    
+                    for (const familia of familias) {
                         const members = await Player.find({
                             userId: { $in: familia.members },
                         });
