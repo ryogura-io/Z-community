@@ -121,7 +121,7 @@ const eventCommands = {
 
         deck.forEach((card, i) => {
           if (card)
-            deckMsg += `🎃 *${i + 1}.* ${card.name}\n       Series: ${card.series}\n       Tier: ${card.tier}\n\n`;
+            deckMsg += `🎃 *${i + 1}.* ${card.name}\n🎭 Series: ${card.series}\n⭐ Tier: ${card.tier}\n\n`;
         });
 
         deckMsg += `\n💡 Use \`!edeck <number>\` to see individual cards`;
