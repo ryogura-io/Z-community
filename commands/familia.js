@@ -98,6 +98,13 @@ const familiaCommands = {
                         { quoted: message },
                     );
 
+                if (familia.members.length >= 7)
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Your familia is full! (Maximum 7 members)" },
+                    { quoted: message },
+                );
+
                 let mentionedUser;
 
                 if (
@@ -451,6 +458,14 @@ const familiaCommands = {
                         { quoted: message },
                     );
                 }
+
+                if (familia.members.length >= 7) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ This familia is full! (Maximum 7 members)" },
+                    { quoted: message },
+                );
+            }
 
                 if (!familia) {
                     return sock.sendMessage(
