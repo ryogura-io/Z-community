@@ -91,7 +91,7 @@ const cardCommands = {
                 await player.save();
 
                 // 🎲 Probability-based shard reward
-                const rewardChance = 0.1; // 10% chance to get 2000 shards
+                const rewardChance = 0.03; // 10% chance to get 2000 shards
                 let rewardShards = 0;
                 if (Math.random() <= rewardChance) {
                     rewardShards = 2000;
@@ -109,7 +109,7 @@ const cardCommands = {
                 const {
                     addItemToInventory,
                 } = require("../utils/inventoryHelper");
-                if (Math.random() <= 0.2) {
+                if (Math.random() <= 0.22) {
                     await addItemToInventory(sender, "event slip", 1);
                     await sock.sendMessage(
                         chatId,
