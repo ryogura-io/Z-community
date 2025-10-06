@@ -820,4 +820,16 @@ const pokemonCommands = {
     }
 };
 
-module.exports = pokemonCommands;
+async function getPokemonCount(userId) {
+    const pokePlayer = await PokePlayer.findOne({ userId });
+    if (!pokePlayer) return 0;
+
+    const total = (pokePlayer.party?.length || 0) + (pokePlayer.pokedex?.length || 0);
+    return total;
+}
+
+module.exports = {
+    pokemonCommands,
+    getPokemonCount
+};
+
