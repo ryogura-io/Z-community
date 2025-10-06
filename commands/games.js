@@ -412,7 +412,7 @@ Use !a <1-9> to make a move, or type !a surrender to give up.
     poke: {
         description: 'Play "Who’s That Pokémon?"',
         usage: "poke",
-        aliases: ["pokemon"],
+        aliases: ["pokem"],
         adminOnly: false,
         execute: async (context) => {
             const { chatId, sock, sender, message } = context;
