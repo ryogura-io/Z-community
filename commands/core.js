@@ -514,17 +514,17 @@ mods: {
 
             const profileMsg =
                 `👤 *PROFILE*\n\n` +
-                `🏷️ Name: ${player.name}\n` +
-                `📊 Level: ${player.level}\n` +
-                `⭐ EXP: ${player.exp.toLocaleString()}\n` +
-                `💰 Shards: ${player.shards.toLocaleString()}\n` +
-                `🎴 Cards: ${totalCards}\n` +
-                `🃏 Deck: ${deckCards}/12\n` +
-                `🐾 Pokémon Count: ${pokeCount}\n` +
-                `🏰 Familia: ${player.familiaId ? player.familiaId.name : "None"}\n` +
-                `🎮 Game Wins: ${player.gameWins || 0}\n` +
-                `📝 Bio: ${player.bio || "No bio set"}\n` +
-                `🎭 Character: ${player.characterName || "Not set"}`;
+                `🏷️ *Name:* ${player.name}\n` +
+                `📊 *Level:* ${player.level}\n` +
+                `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
+                `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
+                `🎴 *Cards:* ${totalCards}\n` +
+                `🃏 *Deck:* ${deckCards}/12\n` +
+                `🐾 *Pokémon Count:* ${pokeCount}\n` +
+                `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n` +
+                `🎮 *Game Wins:* ${player.gameWins || 0}\n` +
+                `📝 *Bio:* ${player.bio || "No bio set"}\n` +
+                `🎭 *Character:* ${player.characterName || "Not set"}`;
 
             await sock.sendMessage(chatId, { image: buffer, caption: profileMsg }, { quoted: message });
         } catch (error) {
