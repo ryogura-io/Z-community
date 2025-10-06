@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const PokePlayer = require("./PokePlayer"); // Import your pokemon player model
 
 const playerSchema = new mongoose.Schema({
   userId: { type: String, required: true }, // WhatsApp JID
@@ -18,26 +19,23 @@ const playerSchema = new mongoose.Schema({
   vault: { type: Number, default: 0 },
 
   // Deck & Collection
-  deck: [{ type: mongoose.Schema.Types.ObjectId, ref: "Card", default: null }], // primary cards (12 slots)
+  deck: [{ type: mongoose.Schema.Types.ObjectId, ref: "Card", default: null }],
   secondaryDeck: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Card", default: null },
-  ], // secondary deck (12 slots)
+  ],
   secondaryDeckName: { type: String, default: "Deck 2" },
-  collection: [{ type: mongoose.Schema.Types.ObjectId, ref: "Card" }], // all owned cards
-  inventory: [{ type: String }], // items
-
-  //inventory
+  collection: [{ type: mongoose.Schema.Types.ObjectId, ref: "Card" }],
   inventory: [
-        {
-            item: { type: String, required: true }, // e.g., "common pack"
-            quantity: { type: Number, default: 0 }, // how many the player owns
-        }
-    ],
+    {
+      item: { type: String, required: true },
+      quantity: { type: Number, default: 0 },
+    },
+  ],
 
   // Status & Settings
   isModerator: { type: Boolean, default: false },
   isBanned: { type: Boolean, default: false },
-  timeout: { type: Date, default: null }, // Timeout until this date
+  timeout: { type: Date, default: null },
   isAfk: { type: Boolean, default: false },
   afkMessage: { type: String, default: "" },
 
@@ -52,15 +50,26 @@ const playerSchema = new mongoose.Schema({
   lastDaily: { type: Date, default: null },
   lastWeekly: { type: Date, default: null },
 
-  // streak tracking
+  // Streak tracking
   gameWins: { type: Number, default: 0 },
-  gameStreak: { type: Number, default: 0 }, // consecutive wins
-  lastGameResult: { type: String, default: "" }, // "win" | "loss"
-
-  // Timeout
-  timeout: { type: Date, default: null },
+  gameStreak: { type: Number, default: 0 },
+  lastGameResult: { type: String, default: "" },
 
   createdAt: { type: Date, default: Date.now },
 });
+
+// 🧮 Virtual property for Pokémon count
+playerSchema.virtual("pokeCount").get(async function () {
+  const pokePlayer = await PokePlayer.findOne({ userId: this.userId });
+  if (!pokePlayer) return 0;
+  return pokePlayer.pokedex?.length || 0;
+});
+
+// ✅ Add a helper function for explicit use
+playerSchema.methods.getPokeCount = async function () {
+  const pokePlayer = await PokePlayer.findOne({ userId: this.userId });
+  if (!pokePlayer) return 0;
+  return pokePlayer.pokedex?.length || 0;
+};
 
 module.exports = mongoose.model("Player", playerSchema);
