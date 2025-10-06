@@ -46,6 +46,20 @@ const categoryMap = {
             "cancelsale",
         ],
     },
+        pokemon: {
+        title: "🐾 Pokemon",
+        commands: [
+            "begin",
+            "catch",
+            "party",
+            "swap",
+            "pokedex",
+            "pokesearch",
+            "givepokemon",
+            "mtp",
+            "mtx",
+        ],
+    },
     core: {
         title: "♟ Core",
         commands: [
@@ -302,7 +316,7 @@ const helpCommand = {
         adminOnly: true,
         execute: async (context) => {
             const { chatId, sock, message } = context;
-            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout, stop, show, addecard, setseries, 
+            const adminMenu = `*🔅 Admin Commands Menu* \n📊 *Admin* \n• settings, ban, unban, disable, spawn, removecard, startslot, endslot, summon, cardinfo, timeout, stop, show, addecard, setseries, sumpoke, pokespawn 
             \n\n👑 *Owner* \n• mode, setpp, addsudo, delsudo, set`
             await sock.sendMessage(chatId, { text: adminMenu }, {quoted: message});
             
