@@ -134,6 +134,8 @@ const categoryMap = {
             "dare",
             "poke",
             "scramble",
+            "word",
+
         ],
     },
     downloads: {
