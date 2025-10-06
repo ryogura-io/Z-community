@@ -94,14 +94,15 @@ async function spawnPokemon(sock, msgQueue, groupId) {
 
         const spawnMessage =
             `┌──「 *POKEMON SPAWN* 」\n\n` +
-            `🐾 *Name:* ${pokemonData.displayName}\n` +
-            `🔢 *Pokedex #:* ${pokemonDoc.id}\n` +
+            // `🐾 *Name:* ${pokemonData.displayName}\n` +
+            // `🔢 *Pokedex #:* ${pokemonDoc.id}\n` +
             `🏷️ *Type:* ${pokemonData.types.join(', ')}\n` +
-            `📏 *Height:* ${pokemonDoc.profile.height}\n` +
-            `⚖️ *Weight:* ${pokemonDoc.profile.weight}\n` +
+            // `📏 *Height:* ${pokemonDoc.profile.height}\n` +
+            // `⚖️ *Weight:* ${pokemonDoc.profile.weight}\n` +
             `⚡ *Abilities:* ${abilities}\n` +
             `🎯 *Species:* ${pokemonData.species}\n\n` +
-            `> *Use:* *!catch ${pokemonData.name}* to catch this Pokemon!`;
+            // `> *Use:* *!catch ${pokemonData.name}* to catch this Pokemon!`;
+            `> *Use:* *!catch <pokemon-name>* to catch this Pokemon!`;
 
         await msgQueue.sendMessage(groupId, {
             image: { url: pokemonData.hires },
