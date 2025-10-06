@@ -201,7 +201,7 @@ const cardCommands = {
                     // Generate collection text
                     let collectionMsg = `🎴 *${player.name}'s Collection (${totalCards} cards)*\n\n`;
                     player.collection.forEach((card, index) => {
-                        collectionMsg += `*${index + 1}. ${card.name}* [${card.tier}]\n    Series: ${card.series}\n`;
+                        collectionMsg += `*${index + 1}. ${card.name}* (${card.tier})\n    Series: ${card.series}\n`;
                     });
 
                     // Use the first card's image as the message image
@@ -278,7 +278,7 @@ const cardCommands = {
                     const tierCards = grouped[tier];
                     if (tierCards.length === 0) continue; // skip empty tiers
 
-                    cardsMsg += `${emoji[tier]} *Tier ${tier}* (${tierCards.length})\n`;
+                    cardsMsg += `${emoji[tier] || "⛩️"} *Tier ${tier}* (${tierCards.length})\n`;
                     tierCards.forEach((card, idx) => {
                         cardsMsg += `   ${idx + 1}. ${card.name}\n`;
                     });
@@ -605,7 +605,7 @@ const cardCommands = {
                 let seriesMsg = `🃏 *${player.name}'s ${seriesName} cards (${seriesCards.length})*\n\n`;
                 emoji = ["🔥", "🔹", "🔸", "♦️", "💠", "🌸", "🌀", "⛩️"];
                 sortedCards.forEach((card, index) => {
-                    seriesMsg += `${emoji[card.tier]} ${card.name} (Tier ${card.tier})\n`;
+                    seriesMsg += `${emoji[card.tier] || "⛩️"} ${card.name} (Tier ${card.tier})\n`;
                 });
 
                 await sock.sendMessage(
@@ -775,7 +775,7 @@ const cardCommands = {
                     // Add to receiver
                     receiver.collection.push(card._id || card);
 
-                    transferred.push(`${card.name} [${card.tier}]`);
+                    transferred.push(`${card.name} (${card.tier})`);
                 }
 
                 if (transferred.length === 0) {
