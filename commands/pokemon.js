@@ -206,6 +206,7 @@ const pokemonCommands = {
     catch: {
         description: "Catch a spawned Pokemon by name",
         usage: "catch <pokemon_name>",
+        aliases: ["cp"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
@@ -453,7 +454,7 @@ const pokemonCommands = {
     pokesearch: {
         description: "Search for a Pokemon and show details",
         usage: "pokesearch <pokemon_name>",
-        aliases: ["psearch", "searchpoke", "ps"],
+        aliases: ["psearch", "searchpoke", "ps", “pokemon“],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
