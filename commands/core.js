@@ -5,6 +5,7 @@ const Familia = require("../models/Familia");
 const axios = require("axios");
 const FormData = require("form-data");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
+const { getPokemonCount } = require("./pokemon");
 
 // helper to fetch characters live from GitHub
 async function getCharacters() {
@@ -252,6 +253,7 @@ const coreCommands = {
                 `🏦 *Vault:* ${player.vault.toLocaleString()}\n` +
                 `🎴 *Total Cards:* ${totalCards}\n` +
                 `🃏 *Cards in Deck:* ${deckCards}/12\n` +
+                `🐾 *Pokemon Count:* ${pokeCount}\n` +
                 `📊 *Level:* ${player.level}\n` +
                 `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
                 `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n\n` +
@@ -309,9 +311,11 @@ const coreCommands = {
 
                         leaderboard += `${medal} *${player.name}*\n`;
                         leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
+                        leaderboard += `   📊 Level: ${player.level || 0}\n`;
                         leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
                         leaderboard += `   💰 Shards: ${player.shards}\n`;
                         leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
+                        leaderboard += `   🐾 Pokemon Count:* ${pokeCount}\n`;
                         leaderboard += `   🎮 Wins: ${player.gameWins}\n`;
                         leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n\n`;
                     });
@@ -389,6 +393,7 @@ const coreCommands = {
                     leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
                     leaderboard += `   💰 Shards: ${player.shards}\n`;
                     leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
+                    leaderboard += `   🐾 Pokemon Count:* ${pokeCount}\n`;
                     leaderboard += `   🎮 Wins: ${player.gameWins}\n`;
                     leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n\n`;
                 });
@@ -409,29 +414,55 @@ const coreCommands = {
         },
     },
 
-    mods: {
-        description: "Tag all moderators",
-        usage: "mods",
-        adminOnly: false,
-        execute: async ({ chatId, sock, message, bot }) => {
+mods: {
+    description: "Tag all moderators",
+    usage: "mods",
+    adminOnly: false,
+    execute: async ({ chatId, sock, message }) => {
+        try {
             const config = require("../config");
-            const admins = config.get("admins");
+            const admins = config.get("admins") || [];
+
+            // Load Config model
+            const Config = require("../models/Config");
+            const dbConfig = await Config.findOne({});
+            const dbModerators = dbConfig?.moderators || [];
+
+            // Merge and remove duplicates
+            const allMods = [...new Set([...admins, ...dbModerators])];
+
+            if (!allMods.length) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ No moderators found." },
+                    { quoted: message }
+                );
+            }
 
             let modList = "🛡️ *MODERATORS*\n\n";
-            admins.forEach((admin) => {
-                modList += `~ @${admin.split("@")[0]}\n`;
+            allMods.forEach((mod) => {
+                modList += `~ @${mod.split("@")[0]}\n`;
             });
 
             await sock.sendMessage(
                 chatId,
                 {
                     text: modList,
-                    mentions: admins,
+                    mentions: allMods,
                 },
-                { quoted: message },
+                { quoted: message }
             );
-        },
+        } catch (error) {
+            console.error("Mods command error:", error);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error fetching moderators." },
+                { quoted: message }
+            );
+        }
     },
+},
+
 
     setpp: {
         description: "Set your profile picture",
@@ -618,6 +649,7 @@ const coreCommands = {
                     `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
                     `🎴 *Cards:* ${totalCards}\n` +
                     `🃏 *Deck:* ${deckCards}/12\n` +
+                    `🐾 *Pokemon Count:* ${pokeCount}\n` +
                     `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n` +
                     `🎮 *Game Wins:* ${player.gameWins || 0}\n` +
                     `📝 *Bio:* ${player.bio || "No bio set"}\n` +
