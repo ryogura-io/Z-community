@@ -14,6 +14,7 @@ const { Boom } = require('@hapi/boom');
 const MessageQueue = require("./utils/queue"); // ✅ import queue
 const readline = require("readline");
 const { scheduleCardSpawns } = require("./spawnManager"); // your spawn logic
+const { schedulePokemonSpawns } = require("./pokeSpawn");
 const mongoose = require("mongoose"); // fixed typo (was "moongoose")
 
 const MONGO_URI = process.env.MONGODB_URI || 
@@ -164,6 +165,7 @@ async function startBot() {
         });
 
         scheduleCardSpawns(sock, msgQueue); // start spawn scheduler
+        schedulePokemonSpawns(sock, msgQueue);
 
     } catch (error) {
         console.error('❌ Error starting bot:', error);
