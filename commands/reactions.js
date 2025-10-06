@@ -28,9 +28,23 @@ reactions.forEach((reaction) => {
         adminOnly: false,
         execute: async ({ chatId, sock, message }) => {
             const sender = message.key.participant || message.key.remoteJid;
-            const mentioned =
-                message.message?.extendedTextMessage?.contextInfo
-                    ?.mentionedJid?.[0];
+            let mentioned;
+
+            if (
+                message.message?.extendedTextMessage?.contextInfo?.participant
+            ) {
+                mentioned =
+                    message.message.extendedTextMessage.contextInfo.participant;
+            } else if (
+                message.message?.extendedTextMessage?.contextInfo?.mentionedJid
+                    ?.length
+            ) {
+                mentioned =
+                    message.message.extendedTextMessage.contextInfo
+                        .mentionedJid[0];
+            } else {
+                mentioned = message.key.participant || message.key.remoteJid;
+            }
 
             try {
                 // Fetch GIF from API
