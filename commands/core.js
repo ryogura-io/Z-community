@@ -241,15 +241,15 @@ const coreCommands = {
 
             const msg =
                 `🎒 *${player.name}'s INVENTORY*\n\n` +
-                `💰 Shards: ${player.shards.toLocaleString()}\n` +
-                `💎 Crystals: ${player.crystals.toLocaleString()}\n` +
-                `🏦 Vault: ${player.vault.toLocaleString()}\n` +
-                `🎴 Total Cards: ${totalCards}\n` +
-                `🃏 Cards in Deck: ${deckCards}/12\n` +
-                `🐾 Pokémon Count: ${pokeCount}\n` +
-                `📊 Level: ${player.level}\n` +
-                `⭐ EXP: ${player.exp.toLocaleString()}\n` +
-                `🏰 Familia: ${player.familiaId ? player.familiaId.name : "None"}\n\n` +
+                `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
+                `💎 *Crystals:* ${player.crystals.toLocaleString()}\n` +
+                `🏦 *Vault:* ${player.vault.toLocaleString()}\n` +
+                `🎴 *Total Cards:* ${totalCards}\n` +
+                `🃏 *Cards in Deck:* ${deckCards}/12\n` +
+                `🐾 *Pokémon Count:* ${pokeCount}\n` +
+                `📊 *Level:* ${player.level}\n` +
+                `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
+                `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n\n` +
                 itemsMsg;
 
             await sock.sendMessage(chatId, { text: msg }, { quoted: message });
@@ -276,7 +276,7 @@ const coreCommands = {
             const pokePlayers = await PokePlayer.find({});
             const pokeMap = new Map(pokePlayers.map(p => [p.userId, p.pokedex?.length || 0]));
 
-            let sorted = [...players];
+            let sorted = [...players].sort((a, b) => b.exp - a.exp);
             let leaderboard = "";
 
             if (type === "shards") {
@@ -309,8 +309,8 @@ const coreCommands = {
                 familiaStats.slice(0, 10).forEach((f, idx) => {
                     const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
                     leaderboard += `${medal} *${f.name}*\n`;
-                    leaderboard += `   Total Exp: ${f.totalExp.toLocaleString()} XP\n`;
-                    leaderboard += `   Members: ${f.members?.length}\n\n`;
+                    leaderboard += `       Total Exp: ${f.totalExp.toLocaleString()} XP\n`;
+                    leaderboard += `       Members: ${f.members?.length}\n\n`;
                 });
 
                 return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
