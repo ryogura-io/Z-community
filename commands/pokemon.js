@@ -265,7 +265,7 @@ const pokemonCommands = {
                 let successMsg =
                     `🎉 *Pokemon caught by ${pokePlayer.name}!*\n\n` +
                     `🐾 *Pokemon:* ${caughtPokemon.displayName}\n` +
-                    `📊 *Level:* ${caughtPokemon.level}\n` +
+                    `📊 *Level:* ${caughtPokemon.level}\n`;
 
                 if (levelUpMsgs.length > 0) {
                     successMsg += `\n📈 *Level Updates:*\n${levelUpMsgs.join('\n')}`;
@@ -288,58 +288,95 @@ const pokemonCommands = {
     },
 
     party: {
-        description: "View your active Pokemon party",
-        usage: "party",
-        adminOnly: false,
-        execute: async ({ sender, chatId, sock, message }) => {
-            try {
-                const pokePlayer = await PokePlayer.findOne({ userId: sender });
-                if (!pokePlayer) {
+    description: "View your active Pokemon party or details of one Pokemon",
+    usage: "party [slot_number]",
+    adminOnly: false,
+    execute: async ({ sender, chatId, args, sock, message }) => {
+        try {
+            const pokePlayer = await PokePlayer.findOne({ userId: sender });
+            if (!pokePlayer) {
+                return sock.sendMessage(
+                    chatId,
+                    { text: "❌ Please start your journey first using !begin <trainer_name>" },
+                    { quoted: message }
+                );
+            }
+
+            // If user types `!party 1` etc.
+            if (args[0]) {
+                const index = parseInt(args[0]) - 1;
+                if (isNaN(index) || index < 0 || index >= pokePlayer.party.length) {
                     return sock.sendMessage(
                         chatId,
-                        { text: "❌ Please start your journey first using !begin <trainer_name>" },
+                        { text: "❌ Invalid party position!" },
                         { quoted: message }
                     );
                 }
 
-                if (pokePlayer.party.length === 0) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: "❌ Your party is empty! Catch some Pokemon first!" },
-                        { quoted: message }
-                    );
-                }
+                const p = pokePlayer.party[index];
+                let caption =
+                    `🎒 *${pokePlayer.name}'s Pokemon*\n\n` +
+                    `📛 *Name:* ${p.displayName}\n` +
+                    `📊 *Level:* ${p.level}\n` +
+                    `⚡ *EXP:* ${p.exp}\n` +
+                    `🏷️ *Type:* ${p.types.join(', ')}\n` +
+                    `🧬 *Species:* ${p.species}\n\n` +
+                    `❤️ *HP:* ${p.baseStats.hp}\n` +
+                    `⚔️ *Attack:* ${p.baseStats.attack}\n` +
+                    `🛡️ *Defense:* ${p.baseStats.defense}\n` +
+                    `💫 *Sp. Atk:* ${p.baseStats.spAttack}\n` +
+                    `💎 *Sp. Def:* ${p.baseStats.spDefense}\n` +
+                    `⚡ *Speed:* ${p.baseStats.speed}\n`;
 
-                const partyPokemons = pokePlayer.party.map(p => ({
-                    img: p.hires,
-                    name: p.displayName
-                }));
-
-                const gridBuffer = await createCardGrid(partyPokemons, 3, 200, 200, 10);
-
-                let caption = `🎒 *${pokePlayer.name}'s Party*\n\n`;
-                pokePlayer.party.forEach((p, idx) => {
-                    caption += `${idx + 1}. ${p.displayName} - Lv.${p.level} (${p.types.join('/')})\n`;
-                });
-
-                await sock.sendMessage(
+                return sock.sendMessage(
                     chatId,
                     {
-                        image: gridBuffer,
+                        image: { url: p.hires || p.sprite },
                         caption
                     },
                     { quoted: message }
                 );
-            } catch (error) {
-                console.error("Party error:", error);
-                await sock.sendMessage(
+            }
+
+            // Otherwise, show the full party grid
+            if (pokePlayer.party.length === 0) {
+                return sock.sendMessage(
                     chatId,
-                    { text: "❌ Error displaying party." },
+                    { text: "❌ Your party is empty! Catch some Pokemon first!" },
                     { quoted: message }
                 );
             }
+
+            const partyPokemons = pokePlayer.party.map(p => ({
+                img: p.hires,
+                name: p.displayName
+            }));
+
+            const gridBuffer = await createCardGrid(partyPokemons, 3, 200, 200, 10);
+
+            let caption = `🎒 *${pokePlayer.name}'s Party*\n\n`;
+            pokePlayer.party.forEach((p, idx) => {
+                caption += `${idx + 1}. ${p.displayName} - Lv.${p.level} (${p.types.join('/')})\n`;
+            });
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: gridBuffer,
+                    caption
+                },
+                { quoted: message }
+            );
+        } catch (error) {
+            console.error("Party error:", error);
+            await sock.sendMessage(
+                chatId,
+                { text: "❌ Error displaying party." },
+                { quoted: message }
+            );
         }
-    },
+    }
+},
 
     swap: {
         description: "Swap positions of Pokemon in your party",
@@ -450,7 +487,7 @@ const pokemonCommands = {
     pokesearch: {
         description: "Search for a Pokemon and show details",
         usage: "pokesearch <pokemon_name>",
-        aliases: ["psearch", "searchpoke", "ps", “pokemon“],
+        aliases: ["psearch", "searchpoke", "ps", "pokemon"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
