@@ -1,4 +1,5 @@
 const Player = require("../models/Player");
+const PokePlayer = require("../models/PokePlayer");
 const fetch = require("node-fetch");
 const Group = require("../models/Group");
 const Familia = require("../models/Familia");
@@ -221,52 +222,40 @@ const coreCommands = {
     usage: "inventory",
     aliases: ["inv"],
     adminOnly: false,
-    execute: async ({ sender, chatId, bot, sock, message }) => {
+    execute: async ({ sender, chatId, sock, message }) => {
         try {
-            const player = await Player.findOne({
-                userId: sender,
-            }).populate("collection deck familiaId");
-            if (!player) {
-                return sock.sendMessage(
-                    chatId,
-                    { text: "❌ Please register first!" },
-                    { quoted: message }
-                );
-            }
+            const player = await Player.findOne({ userId: sender }).populate("collection deck familiaId");
+            if (!player) return sock.sendMessage(chatId, { text: "❌ Please register first!" }, { quoted: message });
+
+            const pokePlayer = await PokePlayer.findOne({ userId: sender });
+            const pokeCount = pokePlayer?.pokedex?.length || 0;
 
             const totalCards = player.collection.length;
-            const deckCards = player.deck.filter((card) => card !== null).length;
+            const deckCards = player.deck.filter(c => c !== null).length;
 
-            // --- Build items section ---
             let itemsMsg = "📦 *Items:* None";
-            if (player.inventory && player.inventory.length > 0) {
-                const ownedItems = player.inventory
-                    .filter((i) => i.quantity > 0)
-                    .map((i) => `${i.item} x${i.quantity}`);
-                if (ownedItems.length > 0) itemsMsg = `📦 *Items:*\n- ${ownedItems.join("\n- ")}`;
+            if (player.inventory && player.inventory.length) {
+                const ownedItems = player.inventory.filter(i => i.quantity > 0).map(i => `${i.item} x${i.quantity}`);
+                if (ownedItems.length) itemsMsg = `📦 *Items:*\n- ${ownedItems.join("\n- ")}`;
             }
 
             const msg =
                 `🎒 *${player.name}'s INVENTORY*\n\n` +
-                `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
-                `💎 *Crystals:* ${player.crystals.toLocaleString()}\n` +
-                `🏦 *Vault:* ${player.vault.toLocaleString()}\n` +
-                `🎴 *Total Cards:* ${totalCards}\n` +
-                `🃏 *Cards in Deck:* ${deckCards}/12\n` +
-                `🐾 *Pokemon Count:* ${pokeCount}\n` +
-                `📊 *Level:* ${player.level}\n` +
-                `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
-                `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n\n` +
+                `💰 Shards: ${player.shards.toLocaleString()}\n` +
+                `💎 Crystals: ${player.crystals.toLocaleString()}\n` +
+                `🏦 Vault: ${player.vault.toLocaleString()}\n` +
+                `🎴 Total Cards: ${totalCards}\n` +
+                `🃏 Cards in Deck: ${deckCards}/12\n` +
+                `🐾 Pokémon Count: ${pokeCount}\n` +
+                `📊 Level: ${player.level}\n` +
+                `⭐ EXP: ${player.exp.toLocaleString()}\n` +
+                `🏰 Familia: ${player.familiaId ? player.familiaId.name : "None"}\n\n` +
                 itemsMsg;
 
             await sock.sendMessage(chatId, { text: msg }, { quoted: message });
         } catch (error) {
             console.error("Inventory error:", error);
-            await sock.sendMessage(
-                chatId,
-                { text: "❌ Error fetching inventory." },
-                { quoted: message }
-            );
+            await sock.sendMessage(chatId, { text: "❌ Error fetching inventory." }, { quoted: message });
         }
     },
 },
@@ -282,110 +271,56 @@ const coreCommands = {
             let sortField = "exp";
             let title = "⭐ *EXP LEADERBOARD*";
 
-            // ====== SHARDS LEADERBOARD ======
+            // FETCH PLAYERS AND POKEPLAYERS
+            const players = await Player.find({}).populate("familiaId", "name").populate("collection");
+            const pokePlayers = await PokePlayer.find({});
+            const pokeMap = new Map(pokePlayers.map(p => [p.userId, p.pokedex?.length || 0]));
+
+            let sorted = [...players];
+            let leaderboard = "";
+
             if (type === "shards") {
                 sortField = "shards";
                 title = "💰 *SHARDS LEADERBOARD*";
-
-            // ====== GAMES LEADERBOARD ======
+                sorted = players.sort((a, b) => b.shards - a.shards);
             } else if (type === "games") {
                 sortField = "gameWins";
                 title = "🎮 *GAMES LEADERBOARD*";
-
-            // ====== CARDS LEADERBOARD ======
+                sorted = players.sort((a, b) => b.gameWins - a.gameWins);
             } else if (type === "cards") {
-                const players = await Player.find({})
-                    .populate("familiaId", "name")
-                    .populate("collection");
-
-                const sorted = players.sort(
-                    (a, b) => b.collection.length - a.collection.length
-                );
-
-                let leaderboard = `🎴 *CARDS LEADERBOARD*\n\n`;
-                sorted.slice(0, 10).forEach((player, index) => {
-                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
-                    leaderboard += `${medal} *${player.name}*\n`;
-                    leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
-                    leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
-                    leaderboard += `   💰 Shards: ${player.shards}\n`;
-                    leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
-                    leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
-                });
-
-                return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
-            }
-
-            // ====== POKEMON LEADERBOARD ======
-            else if (type === "pokemon") {
-                const players = await Player.find({})
-                    .populate("familiaId", "name");
-
-                // 🐾 Assuming your Player model stores Pokémon in `player.pokemonCollection` or `player.pokemon`
-                const sorted = players.sort(
-                    (a, b) => (b.pokemonCollection?.length || 0) - (a.pokemonCollection?.length || 0)
-                );
-
-                let leaderboard = `🐾 *POKÉMON LEADERBOARD*\n\n`;
-                sorted.slice(0, 10).forEach((player, index) => {
-                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
-                    const pokeCount = player.pokemonCollection?.length || 0;
-                    leaderboard += `${medal} *${player.name}*\n`;
-                    leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
-                    leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
-                    leaderboard += `   💰 Shards: ${player.shards}\n`;
-                    leaderboard += `   🐾 Pokémon: ${pokeCount}\n`;
-                    leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
-                });
-
-                return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
-            }
-
-            // ====== FAMILIA LEADERBOARD ======
-            else if (type === "familia") {
+                title = "🎴 *CARDS LEADERBOARD*";
+                sorted = players.sort((a, b) => b.collection.length - a.collection.length);
+            } else if (type === "pokemon") {
+                title = "🐾 *POKÉMON LEADERBOARD*";
+                sorted = players.sort((a, b) => (pokeMap.get(b.userId) || 0) - (pokeMap.get(a.userId) || 0));
+            } else if (type === "familia") {
                 const familias = await Familia.find({}).populate("members");
                 const familiaStats = [];
 
                 for (const familia of familias) {
-                    const members = await Player.find({
-                        userId: { $in: familia.members },
-                    });
-                    const totalExp = members.reduce(
-                        (sum, m) => sum + (m.exp || 0),
-                        0
-                    );
-                    familiaStats.push({
-                        name: familia.name,
-                        head: familia.head,
-                        members: familia.members,
-                        totalExp,
-                    });
+                    const members = await Player.find({ userId: { $in: familia.members } });
+                    const totalExp = members.reduce((sum, m) => sum + (m.exp || 0), 0);
+                    familiaStats.push({ name: familia.name, head: familia.head, members: familia.members, totalExp });
                 }
 
                 familiaStats.sort((a, b) => b.totalExp - a.totalExp);
 
-                let leaderboard = `🏰 *FAMILIA LEADERBOARD*\n\n`;
-                familiaStats.slice(0, 10).forEach((familia, index) => {
-                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
-                    leaderboard += `${medal} *${familia.name}*\n`;
-                    leaderboard += `   Total Exp: ${familia.totalExp.toLocaleString()} XP\n`;
-                    leaderboard += `   Members: ${familia.members?.length}\n\n`;
+                leaderboard = `🏰 *FAMILIA LEADERBOARD*\n\n`;
+                familiaStats.slice(0, 10).forEach((f, idx) => {
+                    const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`;
+                    leaderboard += `${medal} *${f.name}*\n`;
+                    leaderboard += `   Total Exp: ${f.totalExp.toLocaleString()} XP\n`;
+                    leaderboard += `   Members: ${f.members?.length}\n\n`;
                 });
 
                 return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
             }
 
-            // ====== DEFAULT (EXP / SHARDS / GAMES) ======
-            const players = await Player.find({})
-                .populate("familiaId", "name")
-                .populate("collection")
-                .sort({ [sortField]: -1 })
-                .limit(10);
-
-            let leaderboard = `${title}\n\n`;
-            players.forEach((player, index) => {
+            leaderboard = `${title}\n\n`;
+            sorted.slice(0, 10).forEach((player, index) => {
                 const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
-                const pokeCount = player.pokemonCollection?.length || 0;
+                const pokeCount = pokeMap.get(player.userId) || 0;
+
                 leaderboard += `${medal} *${player.name}*\n`;
                 leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
                 leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
@@ -553,116 +488,51 @@ mods: {
     },
 
     profile: {
-        description: "Show your profile details",
-        usage: "profile",
-        aliases: ["p"],
-        adminOnly: false,
-        execute: async ({ sender, chatId, sock, message }) => {
-            try {
-                let target;
+    description: "Show your profile details",
+    usage: "profile",
+    aliases: ["p"],
+    adminOnly: false,
+    execute: async ({ sender, chatId, sock, message }) => {
+        try {
+            const target = message.message?.extendedTextMessage?.contextInfo?.participant ||
+                message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] ||
+                message.key.participant || message.key.remoteJid;
 
-                if (
-                    message.message?.extendedTextMessage?.contextInfo
-                        ?.participant
-                ) {
-                    target =
-                        message.message.extendedTextMessage.contextInfo
-                            .participant;
-                } else if (
-                    message.message?.extendedTextMessage?.contextInfo
-                        ?.mentionedJid?.length
-                ) {
-                    target =
-                        message.message.extendedTextMessage.contextInfo
-                            .mentionedJid[0];
-                } else {
-                    target = message.key.participant || message.key.remoteJid;
-                }
+            const player = await Player.findOne({ userId: target }).populate("collection familiaId deck");
+            if (!player) return sock.sendMessage(chatId, { text: "❌ Please register first!" }, { quoted: message });
 
-                const player = await Player.findOne({
-                    userId: target,
-                }).populate("collection familiaId");
-                if (!player) {
-                    return sock.sendMessage(
-                        chatId,
-                        { text: "❌ Please register first!" },
-                        { quoted: message },
-                    );
-                }
+            const pokePlayer = await PokePlayer.findOne({ userId: target });
+            const pokeCount = pokePlayer?.pokedex?.length || 0;
 
-                // Get profile picture
-                let pfpUrl;
-                if (player.profilePic && player.profilePic.startsWith("http")) {
-                    pfpUrl = player.profilePic;
-                } else {
-                    try {
-                        pfpUrl = await sock.profilePictureUrl(target, "image");
-                    } catch {
-                        pfpUrl = "https://i.waifu.pics/mJkPaVR.png";
-                    }
-                }
+            const totalCards = player.collection.length;
+            const deckCards = player.deck.filter(c => c !== null).length;
 
-                // Download profile pic safely
-                let buffer = null;
-                try {
-                    const fetch = require("node-fetch");
-                    const res = await fetch(pfpUrl);
-                    buffer = Buffer.from(await res.arrayBuffer());
-                } catch (err) {
-                    console.warn(
-                        "Failed to fetch profile pic, using fallback:",
-                        err.message,
-                    );
-                    const fetch = require("node-fetch");
-                    const res = await fetch("https://i.waifu.pics/mJkPaVR.png");
-                    buffer = Buffer.from(await res.arrayBuffer());
-                }
+            // Profile pic fetch
+            let pfpUrl = player.profilePic?.startsWith("http") ? player.profilePic : "https://i.waifu.pics/mJkPaVR.png";
+            const fetch = require("node-fetch");
+            let buffer = Buffer.from(await (await fetch(pfpUrl)).arrayBuffer());
 
-                const totalCards = player.collection.length;
-                const deckCards = player.deck.filter(
-                    (card) => card !== null,
-                ).length;
+            const profileMsg =
+                `👤 *PROFILE*\n\n` +
+                `🏷️ Name: ${player.name}\n` +
+                `📊 Level: ${player.level}\n` +
+                `⭐ EXP: ${player.exp.toLocaleString()}\n` +
+                `💰 Shards: ${player.shards.toLocaleString()}\n` +
+                `🎴 Cards: ${totalCards}\n` +
+                `🃏 Deck: ${deckCards}/12\n` +
+                `🐾 Pokémon Count: ${pokeCount}\n` +
+                `🏰 Familia: ${player.familiaId ? player.familiaId.name : "None"}\n` +
+                `🎮 Game Wins: ${player.gameWins || 0}\n` +
+                `📝 Bio: ${player.bio || "No bio set"}\n` +
+                `🎭 Character: ${player.characterName || "Not set"}`;
 
-                // Get familia name
-                let familiaName = "None";
-                if (player.familiaId) {
-                    const familiaCommands = require("./familia");
-                    // Access familias from memoria (this is a simple approach)
-                    familiaName = "Member"; // Fallback
-                }
-
-                const profileMsg =
-                    `👤 *PROFILE*\n\n` +
-                    `🏷️ *Name:* ${player.name}\n` +
-                    `📊 *Level:* ${player.level}\n` +
-                    `⭐ *EXP:* ${player.exp.toLocaleString()}\n` +
-                    `💰 *Shards:* ${player.shards.toLocaleString()}\n` +
-                    `🎴 *Cards:* ${totalCards}\n` +
-                    `🃏 *Deck:* ${deckCards}/12\n` +
-                    `🐾 *Pokemon Count:* ${pokeCount}\n` +
-                    `🏰 *Familia:* ${player.familiaId ? player.familiaId.name : "None"}\n` +
-                    `🎮 *Game Wins:* ${player.gameWins || 0}\n` +
-                    `📝 *Bio:* ${player.bio || "No bio set"}\n` +
-                    `🎭 *Character:* ${player.characterName || "Not set"}`;
-
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        image: buffer,
-                        caption: profileMsg,
-                    },
-                    { quoted: message },
-                );
-            } catch (error) {
-                console.error("Profile error:", error);
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Error fetching profile." },
-                    { quoted: message },
-                );
-            }
-        },
+            await sock.sendMessage(chatId, { image: buffer, caption: profileMsg }, { quoted: message });
+        } catch (error) {
+            console.error("Profile error:", error);
+            await sock.sendMessage(chatId, { text: "❌ Error fetching profile." }, { quoted: message });
+        }
     },
+},
 
     setbio: {
         description: "Set your profile bio",
