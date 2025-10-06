@@ -5,11 +5,15 @@ const groupSchema = new mongoose.Schema({
   groupName: { type: String, default: "" },
 
   activeSpawn: {
-    cardId: { type: mongoose.Schema.Types.ObjectId, ref: "Card" }, // from Cards DB
+    cardId: { type: mongoose.Schema.Types.ObjectId, ref: "Card" },
     captcha: String,
   },
 
-  // Track last shown character in group
+  activePokemonSpawn: {
+    pokemonName: String,
+    pokemonData: Object,
+  },
+
   lastCharacter: {
     id: { type: String, default: "" },
     slug: { type: String, default: "" },
@@ -17,12 +21,13 @@ const groupSchema = new mongoose.Schema({
     romaji_name: { type: String, default: "" },
     display_picture: { type: String, default: "" },
     description: { type: String, default: "" },
-    appearances: [{ name: { type: String } }], // array of appearances
+    appearances: [{ name: { type: String } }],
     url: { type: String, default: "" },
   },
 
   status: { type: String, enum: ["enabled", "disabled"], default: "disabled" },
   spawn: { type: String, enum: ["enabled", "disabled"], default: "enabled" },
+  pokespawn: { type: String, enum: ["enabled", "disabled"], default: "enabled" },
   slot: { type: String, enum: ["enabled", "disabled"], default: "disabled" },
 });
 
