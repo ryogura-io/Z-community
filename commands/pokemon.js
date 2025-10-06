@@ -403,6 +403,7 @@ const pokemonCommands = {
     pokedex: {
         description: "View all owned Pokemon alphabetically",
         usage: "pokedex",
+        aliases: ["dex"],
         adminOnly: false,
         execute: async ({ sender, chatId, sock, message }) => {
             try {
@@ -430,7 +431,7 @@ const pokemonCommands = {
                 let message_text = `📚 *${pokePlayer.name}'s Pokedex* (${allPokemon.length} Pokemon)\n\n`;
                 
                 allPokemon.forEach((p, idx) => {
-                    message_text += `${idx + 1}. ${p.displayName} (#${p.pokemonId}) - Lv.${p.level}\n`;
+                    message_text += `${idx + 1}. *${p.displayName}* (#${p.pokemonId}) - Lv.${p.level}\n`;
                 });
 
                 await sock.sendMessage(
@@ -452,6 +453,7 @@ const pokemonCommands = {
     pokesearch: {
         description: "Search for a Pokemon and show details",
         usage: "pokesearch <pokemon_name>",
+        aliases: ["psearch", "searchpoke", "ps"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
@@ -540,6 +542,7 @@ const pokemonCommands = {
     givepokemon: {
         description: "Give a Pokemon from your party to another trainer",
         usage: "givepokemon <party_position> @mention",
+        aliases: ["gp"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0] || !message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]) {
@@ -613,6 +616,7 @@ const pokemonCommands = {
     mtp: {
         description: "Move Pokemon from Pokedex to Party",
         usage: "mtp <pokedex_index>",
+        aliases: ["movetoparty"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
@@ -685,6 +689,7 @@ const pokemonCommands = {
     mtx: {
         description: "Move Pokemon from Party to Pokedex",
         usage: "mtx <party_position>",
+        aliases: ["movetodex"],
         adminOnly: false,
         execute: async ({ sender, chatId, args, sock, message }) => {
             if (!args[0]) {
@@ -739,6 +744,7 @@ const pokemonCommands = {
     sumpoke: {
         description: "Summon a Pokemon spawn immediately (Admin only)",
         usage: "sumpoke",
+        aliases: ["spoke"],
         adminOnly: true,
         execute: async ({ sender, chatId, sock, msgQueue, message }) => {
             try {
