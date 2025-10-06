@@ -13,7 +13,7 @@ const coreCommands = require("./core");
 const moderatorCommands = require("./moderator");
 const reactionCommands = require("./reactions");
 const eventCommands = require("./event");
-const pokemonCommands = require("./pokemon");
+const { pokemonCommands } = require("./pokemon");
 
 // Combine all commands
 const rawCommands = {
