@@ -493,10 +493,10 @@ const pokemonCommands = {
                 let infoMsg =
                     `🔍 *Pokemon Information*\n\n` +
                     `📛 *Name:* ${pokemon.name.english}\n` +
-                    `🔢 *Pokedex #:* ${pokemon.id}\n` +
+                    // `🔢 *Pokedex #:* ${pokemon.id}\n` +
                     `🏷️ *Type:* ${pokemon.type.join(', ')}\n` +
-                    `📏 *Height:* ${pokemon.profile.height}\n` +
-                    `⚖️ *Weight:* ${pokemon.profile.weight}\n` +
+                    // `📏 *Height:* ${pokemon.profile.height}\n` +
+                    // `⚖️ *Weight:* ${pokemon.profile.weight}\n` +
                     `🎯 *Species:* ${pokemon.species}\n` +
                     `⚡ *Abilities:* ${abilities}\n\n` +
                     `📊 *Base Stats:*\n` +
