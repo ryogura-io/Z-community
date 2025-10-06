@@ -182,8 +182,6 @@ const pokemonCommands = {
                 const welcomeMsg =
                     `🎉 *Welcome to the Pokemon World!*\n\n` +
                     `👤 *Trainer:* ${trainerName}\n` +
-                    `📚 *Pokedex:* 0 Pokemon\n` +
-                    `🎒 *Party:* Empty\n\n` +
                     `Wait for Pokemon spawns and use !catch to capture them!\n` +
                     `Use !party to view your active Pokemon!`;
 
@@ -265,11 +263,9 @@ const pokemonCommands = {
                 const levelUpMsgs = await addExpToParty(pokePlayer, 5, sock, chatId, message);
 
                 let successMsg =
-                    `🎉 *POKEMON CAUGHT!*\n\n` +
-                    `👤 *Trainer:* ${pokePlayer.name}\n` +
+                    `🎉 *Pokemon caught by ${pokePlayer.name}!*\n\n` +
                     `🐾 *Pokemon:* ${caughtPokemon.displayName}\n` +
                     `📊 *Level:* ${caughtPokemon.level}\n` +
-                    `🎒 *Added to:* ${pokePlayer.party.length <= 5 ? 'Party' : 'Pokedex'}\n`;
 
                 if (levelUpMsgs.length > 0) {
                     successMsg += `\n📈 *Level Updates:*\n${levelUpMsgs.join('\n')}`;
