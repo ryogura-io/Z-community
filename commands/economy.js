@@ -539,10 +539,19 @@ const economyCommands = {
                     { quoted: message },
                 );
             }
-
-            try {
                 const robber = await Player.findOne({ userId: sender });
                 const victim = await Player.findOne({ userId: targetUser });
+            if (robber.shards < 5000) {
+    return sock.sendMessage(
+        chatId,
+        {
+            text: "💰 You need at least *5,000 shards* to attempt a robbery!",
+        },
+        { quoted: message },
+    );
+}
+
+            try {
 
                 if (!robber || !victim) {
                     return sock.sendMessage(
