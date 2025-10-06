@@ -272,147 +272,137 @@ const coreCommands = {
 },
 
     leaderboard: {
-        description: "Show leaderboards",
-        usage: "leaderboard [exp|cards|shards|games|familia]",
-        aliases: ["lb"],
-        adminOnly: false,
-        execute: async ({ chatId, args, sock, message }) => {
-            try {
-                const type = args[0] || "exp";
-                let sortField = "exp";
-                let title = "⭐ *EXP LEADERBOARD*";
+    description: "Show leaderboards",
+    usage: "leaderboard [exp|cards|shards|games|familia|pokemon]",
+    aliases: ["lb"],
+    adminOnly: false,
+    execute: async ({ chatId, args, sock, message }) => {
+        try {
+            const type = args[0] || "exp";
+            let sortField = "exp";
+            let title = "⭐ *EXP LEADERBOARD*";
 
-                if (type === "shards") {
-                    sortField = "shards";
-                    title = "💰 *SHARDS LEADERBOARD*";
-                } else if (type === "games") {
-                    sortField = "gameWins";
-                    title = "🎮 *GAMES LEADERBOARD*";
-                } else if (type === "cards") {
-                    // Cards require collection length
-                    const players = await Player.find({})
-                        .populate("familiaId", "name")
-                        .populate("collection");
+            // ====== SHARDS LEADERBOARD ======
+            if (type === "shards") {
+                sortField = "shards";
+                title = "💰 *SHARDS LEADERBOARD*";
 
-                    const sorted = players.sort(
-                        (a, b) => b.collection.length - a.collection.length,
-                    );
+            // ====== GAMES LEADERBOARD ======
+            } else if (type === "games") {
+                sortField = "gameWins";
+                title = "🎮 *GAMES LEADERBOARD*";
 
-                    let leaderboard = `🎴 *CARDS LEADERBOARD*\n\n`;
-                    sorted.slice(0, 10).forEach((player, index) => {
-                        const medal =
-                            index === 0
-                                ? "🥇"
-                                : index === 1
-                                  ? "🥈"
-                                  : index === 2
-                                    ? "🥉"
-                                    : `${index + 1}.`;
-
-                        leaderboard += `${medal} *${player.name}*\n`;
-                        leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
-                        leaderboard += `   📊 Level: ${player.level || 0}\n`;
-                        leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
-                        leaderboard += `   💰 Shards: ${player.shards}\n`;
-                        leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
-                        leaderboard += `   🐾 Pokemon Count:* ${pokeCount}\n`;
-                        leaderboard += `   🎮 Wins: ${player.gameWins}\n`;
-                        leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n\n`;
-                    });
-
-                    return sock.sendMessage(
-                        chatId,
-                        { text: leaderboard },
-                        { quoted: message },
-                    );
-                } else if (type === "familia") {
-                    // Familia leaderboard unchanged
-                    const familias = await Familia.find({}).populate("members");
-                    const familiaStats = [];
-
-                    for (const familia of familias) {
-                        const members = await Player.find({
-                            userId: { $in: familia.members },
-                        });
-                        const totalExp = members.reduce(
-                            (sum, m) => sum + (m.exp || 0),
-                            0,
-                        );
-                        familiaStats.push({
-                            name: familia.name,
-                            head: familia.head,
-                            members: familia.members,
-                            totalExp,
-                        });
-                    }
-
-                    familiaStats.sort((a, b) => b.totalExp - a.totalExp);
-
-                    let leaderboard = `🏰 *FAMILIA LEADERBOARD*\n\n`;
-                    familiaStats.slice(0, 10).forEach((familia, index) => {
-                        const medal =
-                            index === 0
-                                ? "🥇"
-                                : index === 1
-                                  ? "🥈"
-                                  : index === 2
-                                    ? "🥉"
-                                    : `${index + 1}.`;
-                        leaderboard += `${medal} *${familia.name}*\n`;
-                        leaderboard += `       Total Exp: ${familia.totalExp.toLocaleString()} XP\n`;
-                        leaderboard += `       Members: ${familia.members?.length}\n\n`;
-                    });
-
-                    return sock.sendMessage(
-                        chatId,
-                        { text: leaderboard },
-                        { quoted: message },
-                    );
-                }
-
-                // Default case: EXP / SHARDS / GAMES
+            // ====== CARDS LEADERBOARD ======
+            } else if (type === "cards") {
                 const players = await Player.find({})
                     .populate("familiaId", "name")
-                    .populate("collection")
-                    .sort({ [sortField]: -1 })
-                    .limit(10);
+                    .populate("collection");
 
-                let leaderboard = `${title}\n\n`;
-                players.forEach((player, index) => {
-                    const medal =
-                        index === 0
-                            ? "🥇"
-                            : index === 1
-                              ? "🥈"
-                              : index === 2
-                                ? "🥉"
-                                : `${index + 1}.`;
+                const sorted = players.sort(
+                    (a, b) => b.collection.length - a.collection.length
+                );
 
+                let leaderboard = `🎴 *CARDS LEADERBOARD*\n\n`;
+                sorted.slice(0, 10).forEach((player, index) => {
+                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
                     leaderboard += `${medal} *${player.name}*\n`;
                     leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
                     leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
                     leaderboard += `   💰 Shards: ${player.shards}\n`;
                     leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
-                    leaderboard += `   🐾 Pokemon Count:* ${pokeCount}\n`;
-                    leaderboard += `   🎮 Wins: ${player.gameWins}\n`;
-                    leaderboard += `   📜 Bio: ${player.bio || "No bio"}\n\n`;
+                    leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
                 });
 
-                await sock.sendMessage(
-                    chatId,
-                    { text: leaderboard },
-                    { quoted: message },
-                );
-            } catch (error) {
-                console.error("Leaderboard error:", error);
-                await sock.sendMessage(
-                    chatId,
-                    { text: "❌ Error fetching leaderboard." },
-                    { quoted: message },
-                );
+                return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
             }
-        },
+
+            // ====== POKEMON LEADERBOARD ======
+            else if (type === "pokemon") {
+                const players = await Player.find({})
+                    .populate("familiaId", "name");
+
+                // 🐾 Assuming your Player model stores Pokémon in `player.pokemonCollection` or `player.pokemon`
+                const sorted = players.sort(
+                    (a, b) => (b.pokemonCollection?.length || 0) - (a.pokemonCollection?.length || 0)
+                );
+
+                let leaderboard = `🐾 *POKÉMON LEADERBOARD*\n\n`;
+                sorted.slice(0, 10).forEach((player, index) => {
+                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+                    const pokeCount = player.pokemonCollection?.length || 0;
+                    leaderboard += `${medal} *${player.name}*\n`;
+                    leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
+                    leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
+                    leaderboard += `   💰 Shards: ${player.shards}\n`;
+                    leaderboard += `   🐾 Pokémon: ${pokeCount}\n`;
+                    leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
+                });
+
+                return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
+            }
+
+            // ====== FAMILIA LEADERBOARD ======
+            else if (type === "familia") {
+                const familias = await Familia.find({}).populate("members");
+                const familiaStats = [];
+
+                for (const familia of familias) {
+                    const members = await Player.find({
+                        userId: { $in: familia.members },
+                    });
+                    const totalExp = members.reduce(
+                        (sum, m) => sum + (m.exp || 0),
+                        0
+                    );
+                    familiaStats.push({
+                        name: familia.name,
+                        head: familia.head,
+                        members: familia.members,
+                        totalExp,
+                    });
+                }
+
+                familiaStats.sort((a, b) => b.totalExp - a.totalExp);
+
+                let leaderboard = `🏰 *FAMILIA LEADERBOARD*\n\n`;
+                familiaStats.slice(0, 10).forEach((familia, index) => {
+                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+                    leaderboard += `${medal} *${familia.name}*\n`;
+                    leaderboard += `   Total Exp: ${familia.totalExp.toLocaleString()} XP\n`;
+                    leaderboard += `   Members: ${familia.members?.length}\n\n`;
+                });
+
+                return sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
+            }
+
+            // ====== DEFAULT (EXP / SHARDS / GAMES) ======
+            const players = await Player.find({})
+                .populate("familiaId", "name")
+                .populate("collection")
+                .sort({ [sortField]: -1 })
+                .limit(10);
+
+            let leaderboard = `${title}\n\n`;
+            players.forEach((player, index) => {
+                const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+                const pokeCount = player.pokemonCollection?.length || 0;
+                leaderboard += `${medal} *${player.name}*\n`;
+                leaderboard += `   ⭐ Exp: ${player.exp || 0}\n`;
+                leaderboard += `   🏰 Familia: ${player.familiaId?.name || "None"}\n`;
+                leaderboard += `   💰 Shards: ${player.shards}\n`;
+                leaderboard += `   🎴 Cards: ${player.collection.length}\n`;
+                leaderboard += `   🐾 Pokémon: ${pokeCount}\n`;
+                leaderboard += `   🎮 Wins: ${player.gameWins}\n\n`;
+            });
+
+            await sock.sendMessage(chatId, { text: leaderboard }, { quoted: message });
+        } catch (error) {
+            console.error("Leaderboard error:", error);
+            await sock.sendMessage(chatId, { text: "❌ Error fetching leaderboard." }, { quoted: message });
+        }
     },
+},
+
 
 mods: {
     description: "Tag all moderators",
