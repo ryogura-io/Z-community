@@ -159,7 +159,7 @@ const economyCommands = {
                     const Card = require("../models/Card");
                     const tier4Cards = await Card.find({ 
     tier: "4", 
-    event: { $ne: true } // exclude event cards
+    isEvent: { $ne: true } // exclude event cards
 });
 
                     if (tier4Cards.length === 0) {
@@ -974,7 +974,7 @@ const economyCommands = {
                 // Get random card of that tier (excluding event cards)
 const cards = await Card.find({ 
     tier, 
-    event: { $ne: true } 
+    isEvent: { $ne: true } 
 });
                 if (cards.length === 0) {
                     return sock.sendMessage(
