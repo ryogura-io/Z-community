@@ -324,8 +324,8 @@ const pokemonCommands = {
                     `❤️ *HP:* ${p.baseStats.hp}\n` +
                     `⚔️ *Attack:* ${p.baseStats.attack}\n` +
                     `🛡️ *Defense:* ${p.baseStats.defense}\n` +
-                    `💫 *Sp. Atk:* ${p.baseStats.spAttack}\n` +
-                    `💎 *Sp. Def:* ${p.baseStats.spDefense}\n` +
+                    // `💫 *Sp. Atk:* ${p.baseStats.spAttack}\n` +
+                    // `💎 *Sp. Def:* ${p.baseStats.spDefense}\n` +
                     `⚡ *Speed:* ${p.baseStats.speed}\n`;
 
                 return sock.sendMessage(
