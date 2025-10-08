@@ -152,7 +152,7 @@ async function spawnCard(sock, msgQueue, groupId) {
             `🔤 *captcha:* ${captcha}\n` +
             `👨‍🎨 *Maker:* ${card.maker}\n` +
             `💰 *Value:* ${cardPrice} shards\n\n` +
-            `> *Use:* *!claim ${captcha}* to claim`;
+            `> *Use:* *!claim ${captcha}* to claim.                 `;
 
         if (
             (card.tier === "6" || card.tier === "S") &&
@@ -243,7 +243,7 @@ async function forceSpawnCard(sock, msgQueue, groupId, arg = null) {
             `🔤 *captcha:* ${captcha}\n` +
             `👨‍🎨 *Maker:* ${card.maker}\n` +
             `💰 *Value:* ${cardPrice} shards\n\n` +
-            `> *Use:* *!claim ${captcha}* to claim`;
+            `> *Use:* *!claim ${captcha}* to claim.                 `;
 
         if (
             (card.tier === "6" || card.tier === "S") &&
