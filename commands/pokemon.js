@@ -229,7 +229,7 @@ const pokemonCommands = {
                 if (pokemonName !== activeSpawn.pokemonData.name.toLowerCase()) {
                     return sock.sendMessage(
                         chatId,
-                        { text: `❌ Wrong Pokemon! The spawned Pokemon is ${activeSpawn.pokemonData.displayName}!` },
+                        { text: `❌ Wrong Pokemon!` },
                         { quoted: message }
                     );
                 }
@@ -537,8 +537,8 @@ const pokemonCommands = {
                     `❤️ HP: ${pokemon.base.HP}\n` +
                     `⚔️ Attack: ${pokemon.base.Attack}\n` +
                     `🛡️ Defense: ${pokemon.base.Defense}\n` +
-                    `💫 Sp. Atk: ${pokemon.base["Sp. Attack"]}\n` +
-                    `💎 Sp. Def: ${pokemon.base["Sp. Defense"]}\n` +
+                    // `💫 Sp. Atk: ${pokemon.base["Sp. Attack"]}\n` +
+                    // `💎 Sp. Def: ${pokemon.base["Sp. Defense"]}\n` +
                     `⚡ Speed: ${pokemon.base.Speed}\n`;
 
                 if (pokemon.evolution?.next && pokemon.evolution.next.length > 0) {
