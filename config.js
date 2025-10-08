@@ -1,5 +1,5 @@
-const pairingNumber = '2348153827918'
-const phoneNumber = '2348153827918' + '@s.whatsapp.net';
+const pairingNumber = '447990764989'
+const phoneNumber = '447990764989' + '@s.whatsapp.net';
 // phone number in international format without + or spaces 
 
 // Default configuration
