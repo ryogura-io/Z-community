@@ -185,7 +185,7 @@ const cardCommands = {
                         `📜 *Name:* ${card.name}\n` +
                         `⭐ *Tier:* ${card.tier}\n` +
                         `🎭 *Series:* ${card.series}\n` +
-                        `👨‍🎨 *Maker:* ${card.maker}`;
+                        `👨‍🎨 *Maker:* ${card.maker}.                `;
 
                     return sendCard(sock, chatId, message, card, cardMsg)
                 } else {
@@ -832,7 +832,7 @@ const cardCommands = {
                         `📜 *Name:* ${card.name}\n` +
                         `⭐ *Tier:* ${card.tier}\n` +
                         `🎭 *Series:* ${card.series}\n` +
-                        `👨‍🎨 *Maker:* ${card.maker}`;
+                        `👨‍🎨 *Maker:* ${card.maker}.                `;
             return sendCard(sock, chatId, message, card, caption);
         }
 
